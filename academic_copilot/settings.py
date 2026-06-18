@@ -35,7 +35,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
      "digi-lib-academic-copilot.onrender.com",
-    ".onrender.com"
+    ".onrender.com",
+    "127.0.0.1"
 ]
 
 
