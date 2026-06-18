@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - The Academic Copilot{% endblock %}
+{% block header %}User Profile{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    <div class="card p-8 rounded-2xl shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 right-0 p-8 opacity-10">
+            <span class="text-9xl">👤</span>
+        </div>
+        
+        <form method="POST" class="space-y-6 relative">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Basic Info -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-bold border-b border-gray-100 pb-2">Account Details</h3>
+                    <div>
+                        <label class="block text-sm font-medium text-secondary mb-1">Username</label>
+                        <input type="text" value="{{ user.username }}" disabled class="w-full px-4 py-2 bg-[var(--bg-primary)] border border-border-color rounded-lg text-secondary opacity-70">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-secondary mb-1">First Name</label>
+                        <input type="text" name="first_name" value="{{ user.first_name }}" class="w-full px-4 py-2 input-themed rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-secondary mb-1">Last Name</label>
+                        <input type="text" name="last_name" value="{{ user.last_name }}" class="w-full px-4 py-2 input-themed rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                    </div>
+                </div>
+
+                <!-- Extended Info -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-bold border-b border-gray-100 pb-2">Additional Info</h3>
+                    <div>
+                        <label class="block text-sm font-medium text-secondary mb-1">Secondary Email</label>
+                        <input type="email" name="secondary_email" value="{{ profile.secondary_email|default:'' }}" class="w-full px-4 py-2 input-themed rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-secondary mb-1">Education Level</label>
+                        <select name="education_level" class="w-full px-4 py-2 input-themed rounded-lg">
+                            <option value="High School" {% if profile.education_level == 'High School' %}selected{% endif %}>High School</option>
+                            <option value="Undergraduate" {% if profile.education_level == 'Undergraduate' %}selected{% endif %}>Undergraduate</option>
+                            <option value="Postgraduate" {% if profile.education_level == 'Postgraduate' %}selected{% endif %}>Postgraduate</option>
+                            <option value="Researcher" {% if profile.education_level == 'Researcher' %}selected{% endif %}>Researcher</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4">
+                <label class="block text-sm font-medium text-secondary mb-1">Short Bio</label>
+                <textarea name="bio" rows="4" class="w-full px-4 py-2 input-themed rounded-lg" placeholder="Tell us about your study goals...">{{ profile.bio|default:'' }}</textarea>
+            </div>
+
+            <div class="flex justify-end pt-6">
+                <button type="submit" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-md">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="card p-6 rounded-2xl shadow-sm text-center">
+            <span class="text-3xl mb-2 block">📅</span>
+            <div class="text-sm text-secondary">Member Since</div>
+            <div class="text-xl font-bold">{{ user.date_joined|date:"M Y" }}</div>
+        </div>
+        <div class="card p-6 rounded-2xl shadow-sm text-center">
+            <span class="text-3xl mb-2 block">📄</span>
+            <div class="text-sm text-secondary">Documents Uploaded</div>
+            <div class="text-xl font-bold">Total: {% if total_docs %}{{ total_docs }}{% else %}Active{% endif %}</div>
+        </div>
+        <div class="card p-6 rounded-2xl shadow-sm text-center">
+            <span class="text-3xl mb-2 block">🔒</span>
+            <div class="text-sm text-secondary">Security Status</div>
+            <div class="text-xl font-bold text-green-500">Secure</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

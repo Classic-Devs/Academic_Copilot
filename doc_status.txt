@@ -1,0 +1,35 @@
+INTERNET_PROGRAMMING_REPORT.pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNAVAILABLE: ipv4:142.250.217.10:443: TCP stream shutting down
+Comp_Security_&_crypto1.pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:142.250.217.10:443: socket is null
+BS_simulation1.pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:142.250.191.10:443: tcp handshaker shutdown
+Comp_security_&_crypto2.pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:142.250.217.10:443: socket is null
+BS_simulation3.pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:142.250.188.10:443: tcp handshaker shutdown
+COMPUTER SECURITY AND CRYPTOGRAPHY(1).pdf | error | 504 Deadline Exceeded
+DBII(1).pdf | error | 404 models/text-embedding-004 is not found for API version v1beta, or is not supported for embedContent. Call ListModels to see the list of available models and their supported methods.
+DBII(3).pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:142.250.217.10:443: tcp handshaker shutdown
+BS_simulation2.pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:142.250.217.10:443: tcp handshaker shutdown
+DBII(4).pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:142.250.188.10:443: tcp handshaker shutdown
+Design_of_algorithms1.pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:142.250.217.10:443: socket is null
+Design_of_algorithms3.pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:142.250.217.10:443: tcp handshaker shutdown
+IS_audit1.pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:142.250.217.10:443: tcp handshaker shutdown
+IS_audit3.pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:142.250.217.10:443: tcp handshaker shutdown
+IS_audit4.pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:142.250.217.10:443: tcp handshaker shutdown
+OOP_java1.pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:142.250.217.10:443: socket is null
+OOP_java2.pdf | error | 504 Deadline Exceeded
+IS_Audit2.pdf | ready | None
+OOP_java3.pdf | error | 504 Deadline Exceeded
+DBII(2).pdf | error | 504 Deadline Exceeded
+RESEARCH_METHODS(1).pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:142.250.217.10:443: socket is null
+Research3.pdf | error | 504 Deadline Exceeded
+SE2.pdf | error | 504 Deadline Exceeded
+BS_simulation4.pdf | ready | None
+SE3.pdf | error | 504 Deadline Exceeded
+SE1.pdf | error | 504 Deadline Exceeded
+SE4.pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:142.250.217.10:443: socket is null
+SE5.pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:142.250.217.10:443: socket is null
+Design_of_algorithms2.pdf | error | Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:142.250.217.10:443: socket is null
+OOP_java4.pdf | error | 504 Deadline Exceeded
+Research2.pdf | error | 504 Deadline Exceeded
+HYBRID INHERITANCE.pdf | error | 404 models/text-embedding-004 is not found for API version v1beta, or is not supported for embedContent. Call ListModels to see the list of available models and their supported methods.
+Person9.pdf | error | 404 models/text-embedding-004 is not found for API version v1beta, or is not supported for embedContent. Call ListModels to see the list of available models and their supported methods.
+IT_in_Aviation.pdf | error | 404 models/text-embedding-004 is not found for API version v1beta, or is not supported for embedContent. Call ListModels to see the list of available models and their supported methods.
+Questionnaire.pdf | error | 404 models/text-embedding-004 is not found for API version v1beta, or is not supported for embedContent. Call ListModels to see the list of available models and their supported methods.

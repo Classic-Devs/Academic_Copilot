@@ -1,0 +1,6 @@
+Django>=6.0.3
+django-environ>=0.13.0
+google-generativeai>=0.8.6
+chromadb>=1.5.5
+pypdf>=6.9.2
+python-dotenv>=1.2.2
