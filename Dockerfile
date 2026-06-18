@@ -15,4 +15,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app/
 
 # Run the application
-CMD ["gunicorn", "--bind", ":8080", "Academic_Copilot.wsgi:application"]
+#CMD ["gunicorn", "--bind", ":8080", "Academic_Copilot.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "academic_copilot.wsgi:application"]
