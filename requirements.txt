@@ -24,6 +24,7 @@ cycler==0.12.1
 debugpy==1.8.17
 decorator==5.2.1
 distlib==0.4.0
+dj-database-url==3.1.2
 Django==6.0.3
 django-environ==0.13.0
 durationpy==0.10
@@ -105,6 +106,7 @@ prompt_toolkit==3.0.52
 proto-plus==1.27.2
 protobuf==5.29.6
 psutil==7.1.0
+psycopg2-binary==2.9.12
 pure_eval==0.2.3
 pyarrow==23.0.1
 pyasn1==0.6.3
@@ -126,6 +128,7 @@ python-dotenv==1.2.2
 python-jose==3.5.0
 python-multipart==0.0.22
 pytz==2026.1.post1
+pywin32==311
 PyYAML==6.0.3
 pyzmq==27.1.0
 referencing==0.37.0
@@ -175,4 +178,3 @@ whitenoise==6.12.0
 xyzservices==2025.11.0
 yt-dlp==2026.3.13
 zipp==3.23.0
-gunicorn==26.0.0

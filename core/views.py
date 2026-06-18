@@ -7,9 +7,16 @@ from .models import AcademicDocument, DocumentChunk, UserProfile, ChatMessage
 from .ai_service import AIService
 from django.db.models import Sum, Q
 from django.contrib.auth import login, authenticate, logout
+from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+
+class CustomUserCreationForm(UserCreationForm):
+    email = forms.EmailField(required=True, help_text="Required. Enter a valid email address.")
+
+    class Meta(UserCreationForm.Meta):
+        fields = UserCreationForm.Meta.fields + ('email',)
 
 class LandingView(View):
     def get(self, request):
@@ -17,11 +24,11 @@ class LandingView(View):
 
 class SignupView(View):
     def get(self, request):
-        form = UserCreationForm()
+        form = CustomUserCreationForm()
         return render(request, 'signup.html', {'form': form})
 
     def post(self, request):
-        form = UserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
             UserProfile.objects.create(user=user)

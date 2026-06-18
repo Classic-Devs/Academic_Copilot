@@ -3,6 +3,27 @@
 {% block title %}Sign Up - The Academic Copilot{% endblock %}
 
 {% block full_content %}
+<style>
+    .form-help-popover ul {
+        list-style-type: none !important;
+        padding-left: 0 !important;
+        margin: 0 !important;
+    }
+    .form-help-popover li {
+        margin-top: 4px !important;
+        position: relative !important;
+        padding-left: 14px !important;
+        line-height: 1.4 !important;
+    }
+    .form-help-popover li::before {
+        content: "•" !important;
+        color: var(--accent-primary) !important;
+        position: absolute !important;
+        left: 2px !important;
+        font-weight: bold !important;
+    }
+</style>
+
 <div class="min-h-screen flex items-center justify-center bg-[var(--bg-primary)] px-4 py-8">
     <!-- Aurora backdrop -->
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-72 bg-indigo-500 opacity-10 blur-[120px] rounded-full pointer-events-none"></div>
@@ -23,19 +44,29 @@
                     <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                         {{ field.label }}
                     </label>
-                    <div class="relative">
+                    <div class="relative focus-within:z-20">
                         <input type="{{ field.field.widget.input_type }}"
                                name="{{ field.html_name }}"
                                id="{{ field.id_for_label }}"
-                               class="input-themed appearance-none block w-full px-4 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all"
+                               class="peer input-themed appearance-none block w-full px-4 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all"
                                placeholder="{{ field.label }}"
                                required>
+                        {% if field.help_text %}
+                        <div class="hidden peer-focus:block absolute left-0 top-full mt-1.5 w-full p-4 bg-white dark:bg-[#151921] border border-[var(--border-color)] text-xs rounded-xl shadow-xl z-50 text-[var(--text-secondary)] pointer-events-none transition-all duration-200 form-help-popover">
+                            <div class="font-semibold text-[var(--accent-primary)] mb-1 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Requirements:
+                            </div>
+                            <div class="space-y-1">
+                                {{ field.help_text|safe }}
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                     {% if field.errors %}
                         <p class="mt-1 text-xs text-red-500">{{ field.errors.0 }}</p>
-                    {% endif %}
-                    {% if field.help_text %}
-                        <p class="mt-1 text-xs text-[var(--text-secondary)] opacity-70">{{ field.help_text }}</p>
                     {% endif %}
                 </div>
                 {% endfor %}
