@@ -33,7 +33,10 @@ SECRET_KEY = 'django-insecure-j_$c_^sfure$ty#%cbpk3yt9q_9xa!g-=jx&v_3=5yi^%7^+br
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+     "digi-lib-academic-copilot.onrender.com",
+    ".onrender.com"
+]
 
 
 # Application definition
