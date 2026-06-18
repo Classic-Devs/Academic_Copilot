@@ -6,21 +6,23 @@
 {% block content %}
 <div class="max-w-6xl mx-auto">
     <!-- Search & Filter Bar -->
-    <div class="card p-6 rounded-2xl shadow-sm mb-8 border-indigo-100 bg-gradient-to-br from-[var(--bg-secondary)] via-[var(--bg-secondary)] to-[var(--accent-soft)]">
-        <form method="GET" class="flex flex-col md:flex-row gap-4 items-end">
+    <div class="card p-4 md:p-6 rounded-2xl shadow-sm mb-6 md:mb-8 border-indigo-100 bg-gradient-to-br from-[var(--bg-secondary)] via-[var(--bg-secondary)] to-[var(--accent-soft)]">
+        <form method="GET" class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-end">
             <div class="flex-1 w-full">
-                <label class="block text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-2" for="q">Search Resources</label>
+                <label class="block text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-1.5" for="q">Search Resources</label>
                 <div class="relative">
-                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
+                        <svg class="h-4 w-4 md:h-5 md:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </span>
-                    <input type="text" name="q" id="q" value="{{ search_query }}" placeholder="Search by title or topic..." class="block w-full pl-10 pr-3 py-2.5 border border-[var(--border-color)] rounded-xl leading-5 bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all">
+                    <input type="text" name="q" id="q" value="{{ search_query }}"
+                           placeholder="Search by title or topic..."
+                           class="block w-full pl-9 md:pl-10 pr-3 py-2.5 border border-[var(--border-color)] rounded-xl text-sm bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
                 </div>
             </div>
-            
-            <div class="w-full md:w-64">
-                <label class="block text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-2" for="field">Field of Study</label>
-                <select name="field" id="field" class="block w-full px-3 py-2.5 border border-[var(--border-color)] rounded-xl leading-5 bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all appearance-none cursor-pointer">
+
+            <div class="w-full sm:w-52 md:w-64">
+                <label class="block text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-1.5" for="field">Field of Study</label>
+                <select name="field" id="field" class="block w-full px-3 py-2.5 border border-[var(--border-color)] rounded-xl text-sm bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all appearance-none cursor-pointer">
                     <option value="">All Fields</option>
                     {% for f in fields_of_study %}
                     <option value="{{ f }}" {% if current_field == f %}selected{% endif %}>{{ f }}</option>
@@ -28,62 +30,62 @@
                 </select>
             </div>
 
-            <button type="submit" class="w-full md:w-auto px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
-                <span>Find Resources</span>
-            </button>
-            
-            {% if search_query or current_field %}
-            <a href="{% url 'global_resources' %}" class="w-full md:w-auto px-6 py-2.5 bg-gray-100 text-gray-600 font-semibold rounded-xl hover:bg-gray-200 transition-all text-center">
-                Clear
-            </a>
-            {% endif %}
+            <div class="flex gap-2">
+                <button type="submit" class="flex-1 sm:flex-none px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 text-sm whitespace-nowrap">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    Find
+                </button>
+                {% if search_query or current_field %}
+                <a href="{% url 'global_resources' %}" class="flex-1 sm:flex-none px-5 py-2.5 bg-gray-100 text-gray-600 font-semibold rounded-xl hover:bg-gray-200 transition-all text-center text-sm flex items-center justify-center whitespace-nowrap">
+                    Clear
+                </a>
+                {% endif %}
+            </div>
         </form>
     </div>
 
     <!-- Resources Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {% for doc in docs %}
         <div class="card rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all border-gray-100 overflow-hidden flex flex-col group">
-            <div class="h-1.5 bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-hover)] transition-all"></div>
-            <div class="p-6 flex-1 flex flex-col">
-                <div class="flex items-start justify-between mb-4">
-                    <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <div class="h-1.5 bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-hover)]"></div>
+            <div class="p-4 md:p-6 flex-1 flex flex-col">
+                <div class="flex items-start justify-between mb-3 md:mb-4">
+                    <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600 flex-shrink-0">
+                        <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     </div>
                     {% if doc.field_of_study %}
-                    <span class="px-3 py-1 bg-white border border-indigo-100 text-indigo-600 text-[10px] font-bold uppercase tracking-widest rounded-full shadow-sm">
+                    <span class="px-2 md:px-3 py-0.5 md:py-1 bg-white border border-indigo-100 text-indigo-600 text-[9px] md:text-[10px] font-bold uppercase tracking-widest rounded-full shadow-sm">
                         {{ doc.field_of_study }}
                     </span>
                     {% endif %}
                 </div>
-                
-                <div class="flex items-start justify-between mb-2">
-                    <h3 class="text-xl font-bold text-[var(--text-primary)] line-clamp-2" title="{{ doc.title }}">
-                        {{ doc.title }}
-                    </h3>
-                </div>
-                
-                <div class="flex items-center gap-3 mb-6 bg-[var(--bg-primary)] p-2 rounded-xl border border-[var(--border-color)]">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-[var(--accent-primary)] to-[var(--accent-hover)] flex items-center justify-center text-white text-sm font-bold shadow-sm">
+
+                <h3 class="text-base md:text-xl font-bold text-[var(--text-primary)] line-clamp-2 mb-3 md:mb-4" title="{{ doc.title }}">
+                    {{ doc.title }}
+                </h3>
+
+                <div class="flex items-center gap-2 md:gap-3 mb-4 md:mb-6 bg-[var(--bg-primary)] p-2 rounded-xl border border-[var(--border-color)]">
+                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-tr from-[var(--accent-primary)] to-[var(--accent-hover)] flex items-center justify-center text-white text-xs md:text-sm font-bold shadow-sm flex-shrink-0">
                         {{ doc.user.username|first|upper }}
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-[9px] text-[var(--accent-primary)] uppercase font-bold tracking-widest">Contributor</span>
-                        <span class="text-sm font-bold text-[var(--text-primary)]">{{ doc.user.username }}</span>
+                    <div class="flex flex-col min-w-0">
+                        <span class="text-[8px] md:text-[9px] text-[var(--accent-primary)] uppercase font-bold tracking-widest">Contributor</span>
+                        <span class="text-xs md:text-sm font-bold text-[var(--text-primary)] truncate">{{ doc.user.username }}</span>
                     </div>
                 </div>
 
-                <div class="mt-auto pt-4 border-t border-[var(--border-color)] flex items-center justify-between">
-                    <span class="text-xs text-[var(--text-secondary)]">
-                        {{ doc.uploaded_at|date:"M d, Y" }}
-                    </span>
+                <div class="mt-auto pt-3 md:pt-4 border-t border-[var(--border-color)] flex items-center justify-between gap-2">
+                    <span class="text-xs text-[var(--text-secondary)] flex-shrink-0">{{ doc.uploaded_at|date:"M d, Y" }}</span>
                     <div class="flex items-center gap-2">
-                        <a href="{{ doc.file.url }}" target="_blank" class="px-3 py-2 bg-[var(--bg-primary)] text-[var(--text-secondary)] text-sm font-bold rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all border border-[var(--border-color)] flex items-center gap-2" title="View Document">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                            Preview
+                        <a href="{{ doc.file.url }}" target="_blank"
+                           class="p-2 bg-[var(--bg-primary)] text-[var(--text-secondary)] rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all border border-[var(--border-color)]"
+                           title="Preview Document">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                         </a>
-                        <button onclick="acquireDocument('{{ doc.id }}', '{{ doc.title|escapejs }}')" class="btn-primary px-4 py-2 text-sm font-bold rounded-lg active:scale-95 flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        <button onclick="acquireDocument('{{ doc.id }}', '{{ doc.title|escapejs }}')"
+                                class="btn-primary px-3 md:px-4 py-2 text-xs md:text-sm font-bold rounded-lg active:scale-95 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             Add
                         </button>
                     </div>
@@ -91,12 +93,12 @@
             </div>
         </div>
         {% empty %}
-        <div class="col-span-full py-20 text-center card rounded-2xl border-dashed border-2">
-            <div class="text-5xl mb-4">📚</div>
-            <h2 class="text-xl font-bold text-gray-700 mb-2">No documents found</h2>
-            <p class="text-gray-500">Be the first to share your knowledge with the community!</p>
+        <div class="col-span-full py-16 md:py-20 text-center card rounded-2xl border-dashed border-2">
+            <div class="text-4xl md:text-5xl mb-3 md:mb-4">📚</div>
+            <h2 class="text-lg md:text-xl font-bold text-gray-700 mb-2">No documents found</h2>
+            <p class="text-gray-500 text-sm">Be the first to share your knowledge with the community!</p>
             {% if search_query or current_field %}
-            <a href="{% url 'global_resources' %}" class="mt-4 inline-block text-indigo-600 font-semibold hover:underline">Clear all filters</a>
+            <a href="{% url 'global_resources' %}" class="mt-4 inline-block text-indigo-600 font-semibold hover:underline text-sm">Clear all filters</a>
             {% endif %}
         </div>
         {% endfor %}
@@ -107,31 +109,22 @@
 {% block extra_js %}
 <script>
     function acquireDocument(docId, title) {
-        if (!confirm(`Do you want to add "${title}" to your private library? The AI will process it immediately for chat and retrieval.`)) {
-            return;
-        }
+        if (!confirm(`Add "${title}" to your private library? The AI will process it immediately.`)) return;
 
-        const url = `/acquire/${docId}/`;
-        fetch(url, {
+        fetch(`/acquire/${docId}/`, {
             method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-            }
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
         })
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
             if (data.status === 'success') {
                 showToast(data.message, 'success');
-                // Optional: redirect to dashboard to see progress
                 setTimeout(() => window.location.href = '{% url "dashboard" %}', 1500);
             } else {
                 showToast(data.message || 'Failed to acquire document', 'error');
             }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast('An unexpected error occurred.', 'error');
-        });
+        .catch(() => showToast('An unexpected error occurred.', 'error'));
     }
 </script>
 {% endblock %}

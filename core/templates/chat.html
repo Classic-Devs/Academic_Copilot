@@ -5,73 +5,85 @@
 {% block header %}AI Study Assistant{% endblock %}
 
 {% block content %}
-<div class="flex flex-col h-[calc(100vh-10rem)] max-w-6xl mx-auto card rounded-2xl shadow-2xl overflow-hidden border-0 relative theme-transition">
+<div class="flex flex-col chat-container card rounded-2xl shadow-2xl overflow-hidden border-0 relative theme-transition">
     <!-- Conversation Background Layer -->
-    <div id="chat-bg-layer" class="absolute inset-0 z-0 mix-blend-overlay pointer-events-none transition-opacity duration-1000" 
+    <div id="chat-bg-layer" class="absolute inset-0 z-0 mix-blend-overlay pointer-events-none transition-opacity duration-1000"
          style="background-image: url('{% static 'core/images/chat_bg.png' %}'); background-size: cover; background-position: center; filter: blur(2px);">
     </div>
     <div class="absolute inset-0 z-0 bg-dynamic-gradient pointer-events-none"></div>
 
     <!-- Chat Messages Interface -->
-    <div id="chat-messages" class="relative z-10 flex-1 overflow-y-auto p-10 space-y-12 scroll-smooth custom-scrollbar">
+    <div id="chat-messages" class="relative z-10 flex-1 overflow-y-auto p-4 md:p-10 space-y-8 md:space-y-12 scroll-smooth custom-scrollbar">
         <!-- AI Welcome Message -->
         <div class="w-full animate-fade-in-up">
             <div class="ai-response-area">
-                <div class="flex items-center gap-3 mb-6 border-b border-theme-subtle pb-4">
-                    <div class="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse shadow-glow-indigo"></div>
-                    <p class="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-500/80">Academic Copilot</p>
+                <div class="flex items-center gap-3 mb-4 md:mb-6 border-b border-theme-subtle pb-3 md:pb-4">
+                    <div class="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-indigo-500 animate-pulse shadow-glow-indigo"></div>
+                    <p class="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] text-indigo-500/80">Academic Copilot</p>
                 </div>
-                <div class="message-content text-theme-primary leading-[1.8] text-base font-light">
+                <div class="message-content text-theme-primary leading-[1.8] text-sm md:text-base font-light">
                     Hello! I'm your Academic Copilot. I've analyzed your document library and I'm ready to help you study. What would you like to explore today?
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Source Snippet Viewer (Ultra-glass) -->
-    <div id="source-viewer" class="hidden relative z-20 border-t border-theme-subtle p-6 backdrop-blur-3xl bg-theme-glass max-h-48 overflow-y-auto transition-all duration-300">
-        <div class="flex justify-between items-center mb-4">
+    <!-- Source Snippet Viewer -->
+    <div id="source-viewer" class="hidden relative z-20 border-t border-theme-subtle p-4 md:p-6 backdrop-blur-3xl bg-theme-glass max-h-36 md:max-h-48 overflow-y-auto transition-all duration-300">
+        <div class="flex justify-between items-center mb-3 md:mb-4">
             <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                 Contextual Attribution
             </h4>
-            <button onclick="closeSource()" class="text-theme-secondary hover:text-indigo-500 transition-colors">
+            <button onclick="closeSource()" class="text-theme-secondary hover:text-indigo-500 transition-colors p-1">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
         <p id="source-content" class="text-sm text-theme-secondary italic font-light leading-relaxed"></p>
     </div>
 
-    <!-- Chat Input Area (Minimalist) -->
-    <div class="relative z-10 p-8 bg-theme-secondary border-t border-theme-subtle">
-        <form id="chat-form" class="flex items-center gap-6 bg-theme-input rounded-2xl px-6 py-1 border border-theme-subtle focus-within:border-indigo-500/40 transition-all shadow-sm">
+    <!-- Chat Input Area -->
+    <div class="relative z-10 px-3 py-3 md:p-8 bg-theme-secondary border-t border-theme-subtle">
+        <form id="chat-form" class="flex items-center gap-3 md:gap-6 bg-theme-input rounded-2xl px-4 md:px-6 py-1 border border-theme-subtle focus-within:border-indigo-500/40 transition-all shadow-sm">
             {% csrf_token %}
-            <input type="text" id="user-input" placeholder="Initiate academic inquiry..." 
-                   class="flex-1 bg-transparent border-none text-theme-primary placeholder:text-theme-muted py-4 focus:ring-0 focus:outline-none text-sm tracking-wide">
-            <button type="submit" class="text-indigo-600 dark:text-indigo-400 hover:scale-110 transition-all active:scale-90">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+            <input type="text" id="user-input"
+                   placeholder="Ask anything about your docs..."
+                   autocomplete="off"
+                   class="flex-1 bg-transparent border-none text-theme-primary placeholder:text-theme-muted py-3 md:py-4 focus:ring-0 focus:outline-none text-sm tracking-wide">
+            <button type="submit" class="text-indigo-600 dark:text-indigo-400 hover:scale-110 transition-all active:scale-90 p-1 flex-shrink-0">
+                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
             </button>
         </form>
     </div>
 </div>
 
 <style>
-    /* Theme Transition Smoothness */
-    .theme-transition { transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease; }
+    /* ─── Chat Container Height ──────────────────────────── */
+    .chat-container {
+        /* Mobile: subtract mobile topbar (56px) + bottom nav (64px) + page padding (2*1rem) */
+        height: calc(100dvh - 56px - 64px - 2rem);
+    }
+    @media (min-width: 768px) {
+        /* Desktop: subtract desktop header (64px) + content padding (2*2rem) */
+        .chat-container {
+            height: calc(100dvh - 64px - 4rem);
+        }
+    }
 
-    /* CSS Variable Integration & Overrides */
+    /* ─── Theme Variables ────────────────────────────────── */
+    .theme-transition { transition: background-color 0.5s ease, border-color 0.5s ease; }
+
     :root {
         --chat-bg-opacity: 0.15;
-        --chat-gradient: linear-gradient(to b, transparent, var(--bg-primary));
+        --chat-gradient: linear-gradient(to bottom, transparent, var(--bg-primary));
         --theme-glass: rgba(255, 255, 255, 0.8);
         --theme-subtle: rgba(0, 0, 0, 0.05);
         --theme-input: rgba(0, 0, 0, 0.03);
         --theme-muted: #94a3b8;
     }
-
     [data-theme="dark"] {
         --chat-bg-opacity: 0.35;
-        --chat-gradient: linear-gradient(to b, transparent, rgba(11, 14, 20, 0.8), #0B0E14);
+        --chat-gradient: linear-gradient(to bottom, transparent, rgba(11, 14, 20, 0.8), #0B0E14);
         --theme-glass: rgba(15, 23, 42, 0.85);
         --theme-subtle: rgba(255, 255, 255, 0.05);
         --theme-input: rgba(255, 255, 255, 0.03);
@@ -87,73 +99,80 @@
     .text-theme-primary { color: var(--text-primary); }
     .text-theme-secondary { color: var(--text-secondary); }
     .text-theme-muted { color: var(--theme-muted); }
-    .shadow-glow-indigo { box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
+    .shadow-glow-indigo { box-shadow: 0 0 12px rgba(99, 102, 241, 0.4); }
 
-    /* AI Response Area (Freedom Typing) */
+    /* ─── AI Response Area ───────────────────────────────── */
     .ai-response-area { width: 100%; border: none; padding: 0; }
 
-    /* User Messages */
+    /* ─── User Messages ──────────────────────────────────── */
     .chat-bubble-user {
-        max-width: 75%;
+        max-width: 88%;
         background: linear-gradient(135deg, #6366f1, #4f46e5);
-        padding: 0.85rem 1.75rem;
-        border-radius: 1.5rem;
+        padding: 0.75rem 1.25rem;
+        border-radius: 1.25rem;
         border-bottom-right-radius: 0.25rem;
         color: white;
         margin-left: auto;
-        box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.3);
-        font-size: 0.95rem;
+        box-shadow: 0 8px 20px -5px rgba(99, 102, 241, 0.3);
+        font-size: 0.9rem;
         font-weight: 500;
+        word-break: break-word;
+    }
+    @media (min-width: 768px) {
+        .chat-bubble-user {
+            max-width: 75%;
+            padding: 0.85rem 1.75rem;
+            font-size: 0.95rem;
+        }
     }
 
-    /* Animations */
+    /* ─── Animations ─────────────────────────────────────── */
     @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(12px); }
-        to { opacity: 1; transform: translateY(0); }
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
     }
-    .animate-fade-in-up { animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+    .animate-fade-in-up { animation: fadeInUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
 
-    /* Custom Scrollbar */
+    /* ─── Scrollbar ──────────────────────────────────────── */
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
 
-    /* Clean Markdown Styles */
+    /* ─── Markdown Styles ────────────────────────────────── */
     .message-content { letter-spacing: 0.01em; }
-    .message-content p { margin-bottom: 1.75rem; }
+    .message-content p { margin-bottom: 1.25rem; }
     .message-content h1, .message-content h2, .message-content h3 {
         color: var(--text-primary);
         font-weight: 700;
-        margin-top: 2.5rem;
-        margin-bottom: 1.25rem;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
     }
-    .message-content ul, .message-content ol { margin-left: 1.5rem; margin-bottom: 1.75rem; }
-    .message-content li { margin-bottom: 0.65rem; }
-    .message-content code { 
-        background: var(--theme-input); 
-        padding: 0.2rem 0.45rem; 
-        border-radius: 6px; 
-        font-family: inherit; 
+    .message-content ul, .message-content ol { margin-left: 1.25rem; margin-bottom: 1.25rem; }
+    .message-content li { margin-bottom: 0.5rem; }
+    .message-content code {
+        background: var(--theme-input);
+        padding: 0.15rem 0.4rem;
+        border-radius: 5px;
+        font-family: inherit;
         font-weight: 600;
-        color: #6366f1; 
+        color: #6366f1;
+        font-size: 0.88em;
     }
-    .message-content pre { 
-        background: var(--bg-primary); 
-        padding: 1.5rem; 
-        border-radius: 14px; 
-        margin-bottom: 2rem; 
-        overflow-x: auto; 
+    .message-content pre {
+        background: var(--bg-primary);
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        overflow-x: auto;
         border: 1px solid var(--border-color);
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
     }
     .message-content hr {
         border: 0;
         border-top: 1px solid var(--border-color);
-        margin: 4rem 0;
+        margin: 2.5rem 0;
         opacity: 0.5;
     }
 
-    /* Prose Invert Overrides for Theme Mode */
     [data-theme="light"] .prose-invert { --tw-prose-invert-body: var(--text-primary); }
 </style>
 {% endblock %}
@@ -174,6 +193,10 @@
         addMessage(query, 'user');
         userInput.value = '';
 
+        // Scroll and blur on mobile to dismiss keyboard
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        if (window.innerWidth < 768) userInput.blur();
+
         const typingId = addMessage('Synthesizing response...', 'ai', true);
 
         try {
@@ -185,20 +208,20 @@
                 },
                 body: JSON.stringify({ query: query })
             });
-            
+
             const data = await response.json();
             const typingMsgContainer = document.getElementById(typingId).parentElement;
-            
+
             if (!response.ok) {
                 typingMsgContainer.innerHTML = `<div class="p-4 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 text-sm border border-red-500/20">Analysis interrupted.</div>`;
                 return;
             }
-            
+
             typingMsgContainer.innerHTML = `
                 <div class="ai-response-area">
-                    <div class="flex items-center gap-3 mb-6 border-b border-theme-subtle pb-4">
-                        <div class="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-glow-indigo"></div>
-                        <p class="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-500/80">Academic Copilot</p>
+                    <div class="flex items-center gap-3 mb-4 md:mb-6 border-b border-theme-subtle pb-3 md:pb-4">
+                        <div class="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-indigo-500 shadow-glow-indigo"></div>
+                        <p class="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] text-indigo-500/80">Academic Copilot</p>
                     </div>
                     <div class="message-content opacity-0 animate-fade-in-up" style="animation-delay: 50ms;">
                         ${formatAIResponse(data.response, data.citations)}
@@ -225,16 +248,12 @@
 
     function formatAIResponse(text, citations) {
         let renderedText = "";
-        try {
-            renderedText = marked.parse(text);
-        } catch (e) {
-            renderedText = text;
-        }
-        
+        try { renderedText = marked.parse(text); } catch (e) { renderedText = text; }
+
         let response = `<div class="prose dark:prose-invert max-w-none text-theme-primary">${renderedText}</div>`;
-        
+
         if (citations && citations.length > 0) {
-            response += '<div class="mt-8 pt-6 border-t border-theme-subtle flex flex-wrap gap-3">';
+            response += '<div class="mt-6 pt-4 border-t border-theme-subtle flex flex-wrap gap-2">';
             citations.forEach((cite) => {
                 const label = `${cite.title}, P.${cite.page}`;
                 const escapedContent = encodeURIComponent(cite.content);
@@ -249,20 +268,20 @@
         const id = 'msg-' + Math.random().toString(36).substr(2, 9);
         const wrapper = document.createElement('div');
         wrapper.className = `w-full ${sender === 'user' ? 'flex justify-end' : ''} animate-fade-in-up`;
-        
+
         if (sender === 'user') {
             wrapper.innerHTML = `<div id="${id}" class="chat-bubble-user">${text}</div>`;
         } else {
             wrapper.innerHTML = `
                 <div class="ai-response-area">
-                    <div class="flex items-center gap-3 mb-6 border-b border-theme-subtle pb-4">
-                        <div class="w-2.5 h-2.5 rounded-full bg-indigo-500 ${isTyping ? 'animate-ping' : ''} shadow-glow-indigo"></div>
-                        <p class="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-500/80">Academic Copilot</p>
+                    <div class="flex items-center gap-3 mb-4 md:mb-6 border-b border-theme-subtle pb-3 md:pb-4">
+                        <div class="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-indigo-500 ${isTyping ? 'animate-ping' : ''} shadow-glow-indigo"></div>
+                        <p class="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] text-indigo-500/80">Academic Copilot</p>
                     </div>
-                    <div id="${id}" class="message-content text-theme-primary leading-[1.8] font-light">${text}</div>
+                    <div id="${id}" class="message-content text-theme-primary leading-[1.8] font-light text-sm md:text-base">${text}</div>
                 </div>`;
         }
-        
+
         chatMessages.appendChild(wrapper);
         chatMessages.scrollTop = chatMessages.scrollHeight;
         return id;

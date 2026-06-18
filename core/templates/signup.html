@@ -3,45 +3,51 @@
 {% block title %}Sign Up - The Academic Copilot{% endblock %}
 
 {% block full_content %}
-<div class="min-h-screen flex items-center justify-center bg-primary px-4">
-    <div class="max-w-md w-full space-y-8 card p-10 rounded-2xl shadow-xl border border-gray-100">
+<div class="min-h-screen flex items-center justify-center bg-[var(--bg-primary)] px-4 py-8">
+    <!-- Aurora backdrop -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-72 bg-indigo-500 opacity-10 blur-[120px] rounded-full pointer-events-none"></div>
+
+    <div class="relative w-full max-w-md space-y-6 card p-6 sm:p-10 rounded-2xl shadow-2xl border border-[var(--border-color)]">
+        <!-- Branding -->
         <div class="text-center">
-            <span class="text-4xl">🎓</span>
-            <h2 class="mt-4 text-3xl font-extrabold text-primary">Create your account</h2>
-            <p class="mt-2 text-sm text-secondary">Join thousands of students mastering their courses.</p>
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--accent-primary)] to-indigo-500 text-white text-2xl shadow-lg mb-4">🎓</div>
+            <h2 class="text-2xl md:text-3xl font-extrabold text-[var(--text-primary)]">Create your account</h2>
+            <p class="mt-1 text-sm text-secondary">Join thousands of students mastering their courses.</p>
         </div>
-        
-        <form class="mt-8 space-y-6" method="POST">
+
+        <form class="space-y-4" method="POST">
             {% csrf_token %}
-            <div class="space-y-4">
+            <div class="space-y-3">
                 {% for field in form %}
                 <div>
-                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                         {{ field.label }}
                     </label>
                     <div class="relative">
-                        <input type="{{ field.field.widget.input_type }}" 
-                               name="{{ field.html_name }}" 
+                        <input type="{{ field.field.widget.input_type }}"
+                               name="{{ field.html_name }}"
                                id="{{ field.id_for_label }}"
-                               class="input-themed appearance-none block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all"
+                               class="input-themed appearance-none block w-full px-4 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all"
                                placeholder="{{ field.label }}"
                                required>
                     </div>
                     {% if field.errors %}
                         <p class="mt-1 text-xs text-red-500">{{ field.errors.0 }}</p>
                     {% endif %}
+                    {% if field.help_text %}
+                        <p class="mt-1 text-xs text-[var(--text-secondary)] opacity-70">{{ field.help_text }}</p>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
 
-            <div>
-                <button type="submit" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all shadow-lg hover:shadow-indigo-200">
-                    Sign Up
-                </button>
-            </div>
-            
-            <div class="text-center text-sm">
-                <span class="text-secondary">Already have an account?</span>
+            <button type="submit"
+                    class="btn-primary w-full flex justify-center py-3 px-4 rounded-xl text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all shadow-lg mt-2">
+                Create Account
+            </button>
+
+            <div class="text-center text-sm pt-1">
+                <span class="text-secondary">Already have an account? </span>
                 <a href="{% url 'login' %}" class="font-bold text-indigo-600 hover:text-indigo-500">Log in</a>
             </div>
         </form>
