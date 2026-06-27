@@ -1,12 +1,12 @@
-Academic Copilot — Enhanced Project Documentation
+AltaStudy — Enhanced Project Documentation
 Executive Summary
-The Academic Copilot is an intelligent, context-aware study and research assistant built specifically for academic environments. It bridges the gap between static course materials and dynamic AI-powered interaction, allowing students to query their own uploaded resources — lecture notes, past papers, textbooks — and receive precise, grounded answers.
-Unlike general-purpose AI assistants that rely solely on pre-trained knowledge, the Academic Copilot anchors every response in the student's actual course content. This is achieved through a technique called Retrieval-Augmented Generation (RAG), which significantly reduces hallucinations and ensures answers are always traceable back to real source material.
+AltaStudy is an intelligent, context-aware study and research assistant built specifically for academic environments. It bridges the gap between static course materials and dynamic AI-powered interaction, allowing students to query their own uploaded resources — lecture notes, past papers, textbooks — and receive precise, grounded answers.
+Unlike general-purpose AI assistants that rely solely on pre-trained knowledge, AltaStudy anchors every response in the student's actual course content. This is achieved through a technique called Retrieval-Augmented Generation (RAG), which significantly reduces hallucinations and ensures answers are always traceable back to real source material.
 The project was designed as a flagship workshop demonstration for GDG (Google Developer Groups), showcasing modern AI engineering patterns in a practical, student-facing product.
 
 The Problem It Solves
 Students today face a paradox: they have access to more learning material than ever before, yet finding specific answers within hundreds of pages of notes and past papers remains painfully slow. General AI tools can answer broad questions but have no knowledge of a specific university's curriculum, a professor's unique terminology, or a department's past exam patterns.
-The Academic Copilot solves this by creating a personalized knowledge engine — one that knows exactly what you've uploaded and reasons exclusively within that boundary.
+AltaStudy solves this by creating a personalized knowledge engine — one that knows exactly what you've uploaded and reasons exclusively within that boundary.
 
 System Architecture
 The application is built on a five-layer RAG pipeline, where each layer has a distinct and essential responsibility.
@@ -36,7 +36,7 @@ Asking a Question — The student types a question in plain, natural language �
 Receiving an Answer — The response is presented in the chat interface, grounded in the student's own uploaded content, not in generic internet knowledge.
 
 UI & Design System — Midnight Aurora Theme
-The Academic Copilot's interface follows a premium design language called Midnight Aurora, built for focus, clarity, and visual sophistication.
+AltaStudy's interface follows a premium design language called Midnight Aurora, built for focus, clarity, and visual sophistication.
 Visual Identity — The application uses deep Obsidian backgrounds as its canvas, overlaid with rich Purple-to-Indigo gradients that give the interface a distinctive, high-contrast aesthetic. This palette was chosen deliberately to reduce eye strain during extended study sessions while maintaining a sense of energy and modernity.
 Hero Section — The landing page opens with a bold "Collaborative Library" headline, immediately communicating the platform's core value proposition. An animated "Community Sharing" badge draws attention and signals to new users that this is a living, social platform — not just a personal tool.
 Global Library Section — A dedicated section of the landing page introduces the Global Resource Sharing feature, explaining how students can discover and contribute academic papers from a worldwide community. This section uses feature cards with iconography to make the capability feel approachable and tangible.
@@ -64,3 +64,4 @@ Answer Confidence Indicators
 Display a visual signal indicating how closely the retrieved chunks matched the question. Low-confidence retrievals would prompt the system to recommend uploading more relevant material rather than generating a potentially weak answer.
 Study Session Analytics
 Track which topics a student queries most frequently, identify knowledge gaps based on repeated question patterns, and generate a personalized study priority list ahead of examinations.
+

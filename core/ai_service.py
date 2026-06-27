@@ -134,7 +134,7 @@ class AIService:
         context_status = "The following content is retrieved from the student's private library." if context_text else "No specific documents were found in the student's library for this query. Please provide a helpful answer using your general academic knowledge."
         
         return f"""
-        You are "The Academic Copilot," a high-speed AI study assistant. 
+        You are "AltaStudy," a high-speed AI study assistant. 
         Your goal is to provide comprehensive, structured, and expert academic answers.
 
         {context_status}

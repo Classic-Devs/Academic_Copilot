@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Welcome - The Academic Copilot{% endblock %}
+{% block title %}Welcome - AltaStudy{% endblock %}
 
 {% block full_content %}
 <div class="min-h-screen bg-[var(--bg-primary)] transition-colors duration-500">
@@ -10,7 +10,7 @@
     <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 md:h-20 flex items-center justify-between">
         <div class="flex items-center group cursor-pointer">
             <span class="text-2xl md:text-3xl transition-transform group-hover:scale-110 mr-1.5 md:mr-2">🎓</span>
-            <span class="text-lg md:text-xl font-black tracking-tight text-[var(--text-primary)]">Academic<span class="text-[var(--accent-primary)]">Copilot</span></span>
+            <span class="text-lg md:text-xl font-black tracking-tight text-[var(--text-primary)]">Alta<span class="text-[var(--accent-primary)]">Study</span></span>
         </div>
         <div class="flex items-center gap-3 md:gap-6">
             {% if user.is_authenticated %}
@@ -63,7 +63,7 @@
         <div class="lg:w-1/2 w-full relative group">
             <div class="absolute -inset-4 bg-gradient-to-tr from-[var(--accent-primary)] to-indigo-600 rounded-3xl blur-2xl opacity-20 group-hover:opacity-40 transition duration-1000"></div>
             <div class="relative bg-[var(--bg-secondary)] p-2 rounded-3xl shadow-2xl border border-[var(--border-color)] overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=1200" alt="Academic Copilot Hero" class="w-full h-auto rounded-2xl">
+                <img src="https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=1200" alt="AltaStudy Hero" class="w-full h-auto rounded-2xl">
                 <!-- Floating Card Overlay -->
                 <div class="absolute bottom-4 left-4 right-4 md:bottom-6 md:left-6 md:right-6 bg-white/10 backdrop-blur-xl p-4 md:p-6 rounded-2xl border border-white/20 shadow-2xl hidden sm:block">
                     <div class="flex items-center gap-3 md:gap-4">
@@ -130,7 +130,7 @@
     <!-- Footer -->
     <footer class="border-t border-[var(--border-color)] py-8 md:py-16">
         <div class="max-w-7xl mx-auto px-4 text-center">
-            <p class="text-[var(--text-secondary)] font-bold text-sm md:text-base">© 2026 Academic Copilot. Powered by Gemini AI ✨</p>
+            <p class="text-[var(--text-secondary)] font-bold text-sm md:text-base">© 2026 AltaStudy. Powered by Gemini AI ✨</p>
         </div>
     </footer>
 </div>

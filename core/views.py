@@ -121,6 +121,7 @@ class ChatView(LoginRequiredMixin, View):
         chat_history = ChatMessage.objects.filter(user=request.user).order_by('created_at')[:50]
         history_data = [
             {
+                'id': msg.id,
                 'query': msg.query,
                 'response': msg.response,
                 'citations': msg.citations,
@@ -154,7 +155,7 @@ class ChatView(LoginRequiredMixin, View):
             ]
 
             # 3. Save to Chat History
-            ChatMessage.objects.create(
+            chat_msg = ChatMessage.objects.create(
                 user=request.user,
                 query=query,
                 response=ai_response,
@@ -162,6 +163,7 @@ class ChatView(LoginRequiredMixin, View):
             )
 
             return JsonResponse({
+                'id': chat_msg.id,
                 'response': ai_response,
                 'citations': citations
             })
@@ -171,6 +173,18 @@ class ChatView(LoginRequiredMixin, View):
                 'response': f"I encountered an error: {str(e)}. Please make sure your documents are processed and ready.", 
                 'citations': []
             }, status=500)
+
+class DeleteChatMessageView(LoginRequiredMixin, View):
+    def post(self, request, msg_id):
+        msg = get_object_or_404(ChatMessage, id=msg_id, user=request.user)
+        msg.delete()
+        return JsonResponse({'status': 'success'})
+
+class ClearChatView(LoginRequiredMixin, View):
+    def post(self, request):
+        ChatMessage.objects.filter(user=request.user).delete()
+        return JsonResponse({'status': 'success'})
+
 
 class ReprocessView(LoginRequiredMixin, View):
     def post(self, request, doc_id):

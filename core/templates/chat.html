@@ -1,11 +1,19 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Study Chat - Academic Copilot{% endblock %}
+{% block title %}Study Chat - AltaStudy{% endblock %}
 {% block header %}AI Study Assistant{% endblock %}
 
 {% block content %}
 <div class="flex flex-col chat-container card rounded-2xl shadow-2xl overflow-hidden border-0 relative theme-transition">
+    <!-- Clear Chat Button - Persistent header bar -->
+    <div id="clear-chat-bar" class="hidden relative z-20 flex items-center justify-end px-4 py-2 border-b border-theme-subtle bg-theme-glass backdrop-blur-sm">
+        <button type="button" id="clear-chat-btn" class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg text-red-500/80 hover:text-red-500 hover:bg-red-500/10 transition-all" title="Clear all chat history">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            Clear All
+        </button>
+    </div>
+
     <!-- Conversation Background Layer -->
     <div id="chat-bg-layer" class="absolute inset-0 z-0 mix-blend-overlay pointer-events-none transition-opacity duration-1000"
          style="background-image: url('{% static 'core/images/chat_bg.png' %}'); background-size: cover; background-position: center; filter: blur(2px);">
@@ -19,10 +27,10 @@
             <div class="ai-response-area">
                 <div class="flex items-center gap-3 mb-4 md:mb-6 border-b border-theme-subtle pb-3 md:pb-4">
                     <div class="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-indigo-500 animate-pulse shadow-glow-indigo"></div>
-                    <p class="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] text-indigo-500/80">Academic Copilot</p>
+                    <p class="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] text-indigo-500/80">AltaStudy</p>
                 </div>
                 <div class="message-content text-theme-primary leading-[1.8] text-sm md:text-base font-light">
-                    Hello! I'm your Academic Copilot. I've analyzed your document library and I'm ready to help you study. What would you like to explore today?
+                    Hello! I'm your AltaStudy assistant. I've analyzed your document library and I'm ready to help you study. What would you like to explore today?
                 </div>
             </div>
         </div>
@@ -44,12 +52,13 @@
 
     <!-- Chat Input Area -->
     <div class="relative z-10 px-3 py-3 md:p-8 bg-theme-secondary border-t border-theme-subtle">
-        <form id="chat-form" class="flex items-center gap-3 md:gap-6 bg-theme-input rounded-2xl px-4 md:px-6 py-1 border border-theme-subtle focus-within:border-indigo-500/40 transition-all shadow-sm">
+        <form id="chat-form" class="flex items-end gap-3 md:gap-6 bg-theme-input rounded-2xl px-4 md:px-6 py-2 border border-theme-subtle focus-within:border-indigo-500/40 transition-all shadow-sm">
             {% csrf_token %}
-            <input type="text" id="user-input"
+            <textarea id="user-input"
                    placeholder="Ask anything about your docs..."
                    autocomplete="off"
-                   class="flex-1 bg-transparent border-none text-theme-primary placeholder:text-theme-muted py-3 md:py-4 focus:ring-0 focus:outline-none text-sm tracking-wide">
+                   rows="1"
+                   class="flex-1 bg-transparent border-none text-theme-primary placeholder:text-theme-muted py-2 md:py-3 focus:ring-0 focus:outline-none text-sm tracking-wide resize-none max-h-32 overflow-y-auto custom-scrollbar"></textarea>
             <button type="submit" class="text-indigo-600 dark:text-indigo-400 hover:scale-110 transition-all active:scale-90 p-1 flex-shrink-0">
                 <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
             </button>
@@ -117,6 +126,8 @@
         font-size: 0.9rem;
         font-weight: 500;
         word-break: break-word;
+        position: relative;
+        group: ~"message-user";
     }
     @media (min-width: 768px) {
         .chat-bubble-user {
@@ -124,6 +135,39 @@
             padding: 0.85rem 1.75rem;
             font-size: 0.95rem;
         }
+    }
+
+    /* ─── Message Actions ────────────────────────────────── */
+    .message-actions {
+        display: flex;
+        gap: 0.5rem;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    .message-wrapper:hover .message-actions {
+        opacity: 1;
+    }
+    .message-action-btn {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.5rem;
+        background: var(--theme-input);
+        border: 1px solid var(--theme-subtle);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+    .message-action-btn:hover {
+        background: var(--theme-glass);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+    }
+    .message-action-btn:active {
+        transform: scale(0.95);
     }
 
     /* ─── Animations ─────────────────────────────────────── */
@@ -184,6 +228,56 @@
     const userInput = document.getElementById('user-input');
     const sourceViewer = document.getElementById('source-viewer');
     const sourceContent = document.getElementById('source-content');
+    const clearChatBtn = document.getElementById('clear-chat-btn');
+
+    // Auto-resize textarea
+    userInput.addEventListener('input', () => {
+        userInput.style.height = 'auto';
+        const newHeight = Math.min(userInput.scrollHeight, 128); // 128px = max-h-32
+        userInput.style.height = newHeight + 'px';
+    });
+
+    // Handle Enter to send, Shift+Enter for new line
+    userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            chatForm.dispatchEvent(new Event('submit'));
+        }
+    });
+
+    const clearChatBar = document.getElementById('clear-chat-bar');
+
+    // Clear ALL chat functionality
+    clearChatBtn.addEventListener('click', async () => {
+        if (confirm('Clear all chat history? This cannot be undone.')) {
+            try {
+                const response = await fetch('{% url "clear_chat" %}', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                });
+                if (response.ok) {
+                    // Remove every message-wrapper, keep the welcome message
+                    chatMessages.querySelectorAll('.message-wrapper').forEach(el => el.remove());
+                    updateClearChatButton();
+                } else {
+                    alert('Failed to clear chat history from the server.');
+                }
+            } catch (error) {
+                console.error('Error clearing chat:', error);
+                alert('Network error when clearing chat.');
+            }
+        }
+    });
+
+    // Show/hide the clear-all bar based on whether any Q&A pairs exist
+    function updateClearChatButton() {
+        const hasMessages = chatMessages.querySelectorAll('.message-wrapper').length > 0;
+        if (hasMessages) {
+            clearChatBar.classList.remove('hidden');
+        } else {
+            clearChatBar.classList.add('hidden');
+        }
+    }
 
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -192,6 +286,8 @@
 
         const queryId = addMessage(query, 'user', false, true);
         userInput.value = '';
+        userInput.style.height = 'auto';
+        updateClearChatButton();
 
         // Blur on mobile to dismiss keyboard
         if (window.innerWidth < 768) userInput.blur();
@@ -209,36 +305,59 @@
             });
 
             const data = await response.json();
-            const typingMsgContainer = document.getElementById(typingId).parentElement;
+            // The outer .message-wrapper was already created by addMessage(); get it directly.
+            const outerWrapper = document.getElementById(typingId).closest('.message-wrapper');
 
             if (!response.ok) {
-                typingMsgContainer.innerHTML = `<div class="p-4 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 text-sm border border-red-500/20">Analysis interrupted.</div>`;
+                outerWrapper.innerHTML = `<div class="p-4 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 text-sm border border-red-500/20">Analysis interrupted.</div>`;
                 return;
             }
 
-            typingMsgContainer.innerHTML = `
-                <div class="ai-response-area">
-                    <div class="flex items-center gap-3 mb-4 md:mb-6 border-b border-theme-subtle pb-3 md:pb-4">
-                        <div class="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-indigo-500 shadow-glow-indigo"></div>
-                        <p class="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] text-indigo-500/80">Academic Copilot</p>
+            // Replace the entire content of the existing outer wrapper — no extra nesting.
+            outerWrapper.innerHTML = `
+                <div class="w-full flex flex-col gap-2">
+                    <div class="flex-1">
+                        <div class="ai-response-area">
+                            <div class="flex items-center gap-3 mb-4 md:mb-6 border-b border-theme-subtle pb-3 md:pb-4">
+                                <div class="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-indigo-500 shadow-glow-indigo"></div>
+                                <p class="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] text-indigo-500/80">AltaStudy</p>
+                            </div>
+                            <div class="message-content opacity-0 animate-fade-in-up" style="animation-delay: 50ms;">
+                                ${formatAIResponse(data.response, data.citations)}
+                            </div>
+                        </div>
                     </div>
-                    <div class="message-content opacity-0 animate-fade-in-up" style="animation-delay: 50ms;">
-                        ${formatAIResponse(data.response, data.citations)}
+                    <div class="message-actions flex justify-start gap-2">
+                        <button type="button" class="message-action-btn" onclick="copyMessage(this)" title="Copy response">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        </button>
+                        <button type="button" class="message-action-btn hover:text-red-500 hover:border-red-500/30" onclick="deleteConversation(this)" title="Delete this Q&amp;A">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
                     </div>
                 </div>`;
             
-            // Scroll so that the user's question starts at the top of the viewport, leading down into the response
-            setTimeout(() => {
-                const queryMsgWrapper = document.getElementById(queryId)?.parentElement;
-                if (queryMsgWrapper) {
-                    const offset = queryMsgWrapper.offsetTop - 16;
-                    chatMessages.scrollTo({ top: offset >= 0 ? offset : 0, behavior: 'smooth' });
+            // Stamp the shared db-id on both the AI wrapper and the user bubble wrapper
+            if (data.id) {
+                outerWrapper.setAttribute('data-db-id', data.id);
+                const userBubble = document.getElementById(queryId);
+                if (userBubble) {
+                    const userWrapper = userBubble.closest('.message-wrapper');
+                    if (userWrapper) userWrapper.setAttribute('data-db-id', data.id);
                 }
-            }, 50);
+            }
+
+            // Scroll so the user question + start of AI answer are visible
+            setTimeout(() => {
+                const allWrappers = [...chatMessages.querySelectorAll('.message-wrapper')];
+                const aiIndex = allWrappers.indexOf(outerWrapper);
+                const scrollTarget = aiIndex > 0 ? allWrappers[aiIndex - 1] : outerWrapper;
+                scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 80);
         } catch (error) {
             console.error('Error:', error);
-            const typingMsgContainer = document.getElementById(typingId).parentElement;
-            typingMsgContainer.innerHTML = `<div class="p-4 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 text-sm border border-red-500/20">Connectivity lost.</div>`;
+            const errWrapper = document.getElementById(typingId)?.closest('.message-wrapper');
+            if (errWrapper) errWrapper.innerHTML = `<div class="p-4 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 text-sm border border-red-500/20">Connectivity lost.</div>`;
         }
     });
 
@@ -246,8 +365,8 @@
     if (history && history.length > 0) {
         chatMessages.innerHTML = '';
         history.forEach(item => {
-            addMessage(item.query, 'user', false, false);
-            const aiId = addMessage('', 'ai', false, false);
+            addMessage(item.query, 'user', false, false, item.id);
+            const aiId = addMessage('', 'ai', false, false, item.id);
             const aiMsg = document.getElementById(aiId);
             aiMsg.innerHTML = formatAIResponse(item.response, item.citations);
         });
@@ -278,30 +397,127 @@
         return response;
     }
 
-    function addMessage(text, sender, isTyping = false, shouldScroll = true) {
+    function addMessage(text, sender, isTyping = false, shouldScroll = true, dbId = null) {
         const id = 'msg-' + Math.random().toString(36).substr(2, 9);
         const wrapper = document.createElement('div');
-        wrapper.className = `w-full ${sender === 'user' ? 'flex justify-end' : ''} animate-fade-in-up`;
+        wrapper.className = `w-full animate-fade-in-up message-wrapper`;
+        if (dbId) {
+            wrapper.setAttribute('data-db-id', dbId);
+        }
 
         if (sender === 'user') {
-            wrapper.innerHTML = `<div id="${id}" class="chat-bubble-user">${text}</div>`;
+            // User bubble: copy only, no delete (deletion is handled by AI response button below)
+            wrapper.innerHTML = `
+                <div class="flex gap-2 items-end justify-end flex-col items-end">
+                    <div id="${id}" class="chat-bubble-user">${escapeHtml(text)}</div>
+                    <div class="message-actions flex justify-end">
+                        <button type="button" class="message-action-btn" onclick="copyMessage(this)" title="Copy message">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        </button>
+                    </div>
+                </div>`;
         } else {
             wrapper.innerHTML = `
-                <div class="ai-response-area">
-                    <div class="flex items-center gap-3 mb-4 md:mb-6 border-b border-theme-subtle pb-3 md:pb-4">
-                        <div class="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-indigo-500 ${isTyping ? 'animate-ping' : ''} shadow-glow-indigo"></div>
-                        <p class="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] text-indigo-500/80">Academic Copilot</p>
+                <div class="w-full flex flex-col gap-2">
+                    <div class="flex-1">
+                        <div class="ai-response-area">
+                            <div class="flex items-center gap-3 mb-4 md:mb-6 border-b border-theme-subtle pb-3 md:pb-4">
+                                <div class="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-indigo-500 ${isTyping ? 'animate-ping' : ''} shadow-glow-indigo"></div>
+                                <p class="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] text-indigo-500/80">AltaStudy</p>
+                            </div>
+                            <div id="${id}" class="message-content text-theme-primary leading-[1.8] font-light text-sm md:text-base">${text}</div>
+                        </div>
                     </div>
-                    <div id="${id}" class="message-content text-theme-primary leading-[1.8] font-light text-sm md:text-base">${text}</div>
+                    <div class="message-actions flex justify-start gap-2">
+                        <button type="button" class="message-action-btn" onclick="copyMessage(this)" title="Copy response">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        </button>
+                        <button type="button" class="message-action-btn hover:text-red-500 hover:border-red-500/30" onclick="deleteConversation(this)" title="Delete this Q&amp;A">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
                 </div>`;
         }
 
         chatMessages.appendChild(wrapper);
+        updateClearChatButton();
         if (shouldScroll) {
             chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
         }
         return id;
     }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    window.copyMessage = function(btn) {
+        const messageWrapper = btn.closest('.message-wrapper');
+        let textToCopy = '';
+
+        if (messageWrapper.querySelector('.chat-bubble-user')) {
+            // User message
+            textToCopy = messageWrapper.querySelector('.chat-bubble-user').textContent;
+        } else {
+            // AI message
+            const contentDiv = messageWrapper.querySelector('.message-content');
+            textToCopy = contentDiv.textContent;
+        }
+
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            const originalIcon = btn.innerHTML;
+            btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+            setTimeout(() => {
+                btn.innerHTML = originalIcon;
+            }, 2000);
+        });
+    };
+
+    /**
+     * deleteConversation — removes the entire Q&A pair (user bubble + AI response)
+     * from the UI and persists the deletion to the server.
+     */
+    window.deleteConversation = async function(btn) {
+        const aiWrapper = btn.closest('.message-wrapper');
+        const dbId = aiWrapper ? aiWrapper.getAttribute('data-db-id') : null;
+
+        // Collect both the AI wrapper and the preceding user wrapper (same data-db-id)
+        const relatedWrappers = dbId
+            ? [...document.querySelectorAll(`.message-wrapper[data-db-id="${dbId}"]`)]
+            : [aiWrapper];
+
+        if (dbId) {
+            try {
+                const response = await fetch(`/chat/delete/${dbId}/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                });
+                if (!response.ok) {
+                    alert('Failed to delete the conversation from the server.');
+                    return;
+                }
+            } catch (error) {
+                console.error('Error deleting conversation:', error);
+                alert('Network error when deleting conversation.');
+                return;
+            }
+        }
+
+        relatedWrappers.forEach(wrapper => {
+            wrapper.style.opacity = '0';
+            wrapper.style.transform = 'translateY(-4px)';
+            wrapper.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            setTimeout(() => {
+                wrapper.remove();
+                updateClearChatButton();
+            }, 300);
+        });
+    };
+
+    // Legacy alias kept in case any old markup still references it
+    window.deleteMessage = window.deleteConversation;
 
     window.showSource = function(encodedContent) {
         const content = decodeURIComponent(encodedContent);
