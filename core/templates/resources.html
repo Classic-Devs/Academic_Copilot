@@ -83,8 +83,10 @@
                            title="Preview Document">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                         </a>
-                        <button onclick="acquireDocument('{{ doc.id }}', '{{ doc.title|escapejs }}')"
-                                class="btn-primary px-3 md:px-4 py-2 text-xs md:text-sm font-bold rounded-lg active:scale-95 flex items-center gap-1.5">
+                        <button
+                            id="acquire-btn-{{ doc.id }}"
+                            onclick="acquireDocument('{{ doc.id }}', '{{ doc.title|escapejs }}')"
+                            class="btn-primary px-3 md:px-4 py-2 text-xs md:text-sm font-bold rounded-lg active:scale-95 flex items-center gap-1.5">
                             <svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             Add
                         </button>
@@ -109,22 +111,49 @@
 {% block extra_js %}
 <script>
     function acquireDocument(docId, title) {
-        if (!confirm(`Add "${title}" to your private library? The AI will process it immediately.`)) return;
+        showModal({
+            title: 'Add to Library',
+            message: `Add "${title}" to your private library? The AI will process and index it immediately.`,
+            confirmText: 'Add to Library',
+            type: 'success',
+            onConfirm: () => {
+                const btn = document.getElementById(`acquire-btn-${docId}`);
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Adding…`;
+                }
 
-        fetch(`/acquire/${docId}/`, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.status === 'success') {
-                showToast(data.message, 'success');
-                setTimeout(() => window.location.href = '{% url "dashboard" %}', 1500);
-            } else {
-                showToast(data.message || 'Failed to acquire document', 'error');
+                fetch(`/acquire/${docId}/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showToast(data.message || `"${title}" added to your library!`, 'success');
+                        if (btn) {
+                            btn.disabled = true;
+                            btn.className = btn.className.replace('btn-primary', '') + ' bg-emerald-100 text-emerald-700 border border-emerald-200 cursor-default';
+                            btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> Added`;
+                        }
+                        setTimeout(() => window.location.href = '{% url "dashboard" %}', 2000);
+                    } else {
+                        showToast(data.message || 'Failed to acquire document.', 'error');
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> Add`;
+                        }
+                    }
+                })
+                .catch(() => {
+                    showToast('Network error. Please check your connection and try again.', 'error');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> Add`;
+                    }
+                });
             }
-        })
-        .catch(() => showToast('An unexpected error occurred.', 'error'));
+        });
     }
 </script>
 {% endblock %}

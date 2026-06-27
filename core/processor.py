@@ -130,9 +130,10 @@ class DocumentProcessor:
 
 @receiver(post_save, sender=AcademicDocument)
 def trigger_document_processing(sender, instance, created, **kwargs):
+    # Only auto-process on creation AND when status is explicitly 'processing'.
+    # 'pending' is used by AcquireDocumentView to avoid premature processing
+    # before the file is saved.
     if created and instance.status == 'processing':
-        # In a real app, this should be a background task (e.g., Celery)
-        # For simplicity, we'll process it synchronously or use a simple thread
         import threading
         processor = DocumentProcessor(instance)
         thread = threading.Thread(target=processor.process)

@@ -104,12 +104,14 @@ class UploadView(LoginRequiredMixin, View):
                 }, status=400)
 
             field_of_study = request.POST.get('field_of_study', '').strip() or 'General'
+            is_public = request.POST.get('is_public', 'true').lower() in ('true', '1', 'yes', 'on')
 
             doc = AcademicDocument.objects.create(
                 user=request.user,
                 title=file.name,
                 file=file,
                 field_of_study=field_of_study,
+                is_public=is_public,
                 status='processing'
             )
             return JsonResponse({'status': 'success', 'doc_id': doc.id})
@@ -186,6 +188,18 @@ class ClearChatView(LoginRequiredMixin, View):
         return JsonResponse({'status': 'success'})
 
 
+class ToggleVisibilityView(LoginRequiredMixin, View):
+    """Let an owner flip a document between public and private."""
+    def post(self, request, doc_id):
+        doc = get_object_or_404(AcademicDocument, id=doc_id, user=request.user)
+        doc.is_public = not doc.is_public
+        doc.save(update_fields=['is_public'])
+        return JsonResponse({
+            'status': 'success',
+            'is_public': doc.is_public,
+            'message': 'Resource is now public.' if doc.is_public else 'Resource is now private.'
+        })
+
 class ReprocessView(LoginRequiredMixin, View):
     def post(self, request, doc_id):
         doc = get_object_or_404(AcademicDocument, id=doc_id, user=request.user)
@@ -251,12 +265,18 @@ class GlobalResourcesView(LoginRequiredMixin, View):
 
 class AcquireDocumentView(LoginRequiredMixin, View):
     def post(self, request, doc_id):
-        import shutil
-        from django.core.files import File
-        
-        # Get the global document
+        from django.core.files.base import ContentFile
+
+        # Only public documents can be acquired
         original_doc = get_object_or_404(AcademicDocument, id=doc_id, is_public=True)
-        
+
+        # Prevent acquiring own document
+        if original_doc.user == request.user:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'You cannot add your own resource to your library.'
+            }, status=400)
+
         # Check if user already has it
         if AcademicDocument.objects.filter(user=request.user, title=original_doc.title).exists():
             return JsonResponse({
@@ -264,29 +284,49 @@ class AcquireDocumentView(LoginRequiredMixin, View):
                 'message': f'"{original_doc.title}" is already in your library.'
             }, status=400)
 
-        # Create a new document record for the user
+        try:
+            # Read the original file bytes first — before creating the DB record
+            original_path = original_doc.file.path
+            with open(original_path, 'rb') as f:
+                file_bytes = f.read()
+            filename = os.path.basename(original_path)
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Could not read source file: {str(e)}'
+            }, status=500)
+
+        # Create doc with status 'pending' so the post_save signal does NOT
+        # trigger processing before the file is attached.
         new_doc = AcademicDocument.objects.create(
             user=request.user,
             title=original_doc.title,
             field_of_study=original_doc.field_of_study,
             original_uploader=original_doc.user.username,
-            status='processing'
+            is_public=False,          # acquired copies are private by default
+            status='pending'           # signal skips 'pending'
         )
 
         try:
-            # Safely copy the file
-            original_path = original_doc.file.path
-            filename = os.path.basename(original_path)
-            
-            with open(original_path, 'rb') as f:
-                new_doc.file.save(filename, File(f), save=True)
-            
+            # Save file content — this sets new_doc.file but does NOT re-trigger signal
+            new_doc.file.save(filename, ContentFile(file_bytes), save=True)
+
+            # Now trigger processing by flipping status to 'processing'
+            # The post_save signal only fires for created=True; use a thread directly.
+            from .processor import DocumentProcessor
+            import threading
+            new_doc.status = 'processing'
+            new_doc.save(update_fields=['status'])
+            processor = DocumentProcessor(new_doc)
+            thread = threading.Thread(target=processor.process)
+            thread.start()
+
             return JsonResponse({
                 'status': 'success',
-                'message': f'Added "{original_doc.title}" to your library. AI processing started!'
+                'message': f'✅ "{original_doc.title}" added to your library. AI processing started!'
             })
         except Exception as e:
             new_doc.status = 'error'
-            new_doc.error_message = f"Failed to acquire file: {str(e)}"
+            new_doc.error_message = f'Failed to acquire file: {str(e)}'
             new_doc.save()
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

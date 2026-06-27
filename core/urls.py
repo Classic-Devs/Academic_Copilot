@@ -2,7 +2,8 @@ from django.urls import path
 from .views import (
     LandingView, SignupView, LoginView, LogoutView, 
     DashboardView, ProfileView, ReprocessView, DeleteDocumentView, UploadView, ChatView,
-    GlobalResourcesView, AcquireDocumentView, DeleteChatMessageView, ClearChatView
+    GlobalResourcesView, AcquireDocumentView, DeleteChatMessageView, ClearChatView,
+    ToggleVisibilityView
 )
 
 urlpatterns = [
@@ -20,5 +21,6 @@ urlpatterns = [
     path('chat/clear/', ClearChatView.as_view(), name='clear_chat'),
     path('resources/', GlobalResourcesView.as_view(), name='global_resources'),
     path('acquire/<int:doc_id>/', AcquireDocumentView.as_view(), name='acquire_document'),
+    path('toggle-visibility/<int:doc_id>/', ToggleVisibilityView.as_view(), name='toggle_visibility'),
 ]
 
