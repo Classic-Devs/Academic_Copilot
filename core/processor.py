@@ -1,9 +1,12 @@
 import os
+import logging
 import pypdf
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import AcademicDocument, DocumentChunk
 from .ai_service import AIService
+
+logger = logging.getLogger(__name__)
 
 class DocumentProcessor:
     def __init__(self, document):
@@ -31,13 +34,23 @@ class DocumentProcessor:
                     for j, chunk_text in enumerate(page_chunks):
                         all_chunks_data.append((i+1, j, chunk_text))
 
-            # 2. Process in batches (increased to 20 for better speed)
-            batch_size = 20
-            for i in range(0, len(all_chunks_data), batch_size):
+            # 2. Process in batches of 50 — matches EmbeddingManager.BATCH_LIMIT.
+            #    EmbeddingManager.embed_texts() handles sub-batching internally and
+            #    retries 429 errors with exponential back-off, so we never need to
+            #    worry about quota crashes here.
+            batch_size = 50
+            total_batches = (len(all_chunks_data) + batch_size - 1) // batch_size
+            for batch_num, i in enumerate(range(0, len(all_chunks_data), batch_size), start=1):
                 batch = all_chunks_data[i : i + batch_size]
                 batch_texts = [item[2] for item in batch]
-                
-                # Embed batch
+
+                logger.info(
+                    "Doc %s — embedding batch %d/%d (%d chunks)",
+                    self.document.id,
+                    batch_num,
+                    total_batches,
+                    len(batch_texts),
+                )
                 embeddings = self.ai_service.embed_batch(batch_texts)
                 
                 for k, (page_num, chunk_idx, text) in enumerate(batch):
@@ -65,7 +78,7 @@ class DocumentProcessor:
             self.document.status = 'error'
             self.document.error_message = str(e)
             self.document.save()
-            print(f"Error processing document {self.document.id}: {e}")
+            logger.error("Error processing document %s: %s", self.document.id, e)
 
     def recursive_split_text(self, text, chunk_size=1000, overlap=200):
         """
