@@ -1,46 +1,49 @@
 runtime: python312
 
 # ─── Entrypoint ──────────────────────────────────────────────────────────────
-# Gunicorn serves the Django WSGI application. Workers are tuned for App Engine's
-# F2 instance class (2 vCPUs). Adjust --workers for other instance classes.
+# gthread workers let streaming chat responses run without blocking other
+# requests. Tuned for F2 (2 vCPUs).
 entrypoint: >
   gunicorn
   --bind 0.0.0.0:$PORT
+  --worker-class gthread
   --workers 2
-  --threads 4
+  --threads 8
   --timeout 120
   --log-level info
   academic_copilot.wsgi:application
 
-# ─── Instance Class ──────────────────────────────────────────────────────────
-# F2 = 512 MB RAM, suitable for ChromaDB in-memory + Gemini API calls.
-# Upgrade to F4 (1 GB) if you see OOM errors during embedding/processing.
 instance_class: F2
 
-# ─── Auto-scaling ────────────────────────────────────────────────────────────
 automatic_scaling:
-  min_idle_instances: 0          # scale to zero when idle (saves cost)
+  min_idle_instances: 0
   max_idle_instances: 1
-  min_pending_latency: 30ms      # start new instance quickly under load
+  min_pending_latency: 30ms
   max_pending_latency: automatic
-  max_concurrent_requests: 10    # gunicorn workers * threads
+  max_concurrent_requests: 16
 
-# ─── Environment Variables ────────────────────────────────────────────────────
-# NON-SECRET runtime configuration.
-# Secrets (SECRET_KEY, DATABASE_URL, GEMINI_API_KEY) must be stored in
-# Google Cloud Secret Manager and injected via the secrets block below,
-# OR set manually in the Cloud Console → App Engine → Environment variables.
+# ─── Environment ─────────────────────────────────────────────────────────────
+# App Engine's filesystem is read-only, so production REQUIRES:
+#   • GS_BUCKET_NAME — a private GCS bucket (uniform bucket-level access) for uploads
+#   • CHROMA_HOST    — a Chroma server (e.g. on Cloud Run / GCE) for the vector index
+#   • DATABASE_URL   — Cloud SQL Postgres
+# Secrets (SECRET_KEY, DATABASE_URL, GEMINI_API_KEY) belong in Secret Manager or
+# the Cloud Console — never commit them here.
 env_variables:
   DJANGO_SETTINGS_MODULE: "academic_copilot.settings"
   PYTHONUNBUFFERED: "1"
-  # Override in Cloud Console / CI pipeline — never commit real values here
+  DEBUG: "False"
+  # Google's front end appends <client>, <load balancer> to X-Forwarded-For.
+  TRUSTED_PROXY_COUNT: "2"
+  # GS_BUCKET_NAME: "your-private-bucket"
+  # CHROMA_HOST: "chroma.example.internal"
+  # CHROMA_SSL: "True"
   # DATABASE_URL: "postgres://user:pass@/dbname?host=/cloudsql/project:region:instance"
-  # GEMINI_API_KEY: "AIza..."
+  # CACHE_URL: "redis://10.0.0.3:6379/0"   # shared rate limits across instances
 
-# ─── Static Files ────────────────────────────────────────────────────────────
-# WhiteNoise (already in MIDDLEWARE) handles static files at runtime.
-# The handler below lets App Engine serve them directly from the CDN edge
-# before the request even reaches your app (faster + cheaper).
+# ─── Handlers ────────────────────────────────────────────────────────────────
+# Uploaded documents are private and served only through the app's
+# permission-checked /documents/<id>/file/ view — there is no /media handler.
 handlers:
   - url: /static
     static_dir: staticfiles
@@ -48,28 +51,12 @@ handlers:
     http_headers:
       Cache-Control: "public, max-age=31536000, immutable"
 
-  - url: /media
-    static_dir: media
-    secure: always
-
   - url: /.*
     script: auto
     secure: always
 
-# ─── Lifecycle Hooks ─────────────────────────────────────────────────────────
-# Run migrations and collect static files before the instance receives traffic.
-# Uses Cloud Build's pre-deploy hook via the beta_settings block.
-# Alternatively, run these in your CI/CD pipeline before `gcloud app deploy`.
+# Run migrations and collectstatic in CI before `gcloud app deploy`:
+#   python manage.py migrate --no-input && python manage.py collectstatic --no-input
 #
-# beta_settings:
-#   cloud_sql_instances: "PROJECT_ID:REGION:INSTANCE_NAME"
-
-# ─── VPC / Cloud SQL (uncomment if using Cloud SQL via Unix socket) ──────────
-# beta_settings:
-#   cloud_sql_instances: "my-project:us-central1:my-sql-instance"
-
-# ─── Health Check ────────────────────────────────────────────────────────────
-# App Engine Standard sends /_ah/health by default.
-# Django's root URL conf should return 200 for that path, or you can disable:
-# health_check:
-#   enable_health_check: False
+# Re-process documents lost to instance recycling with a Cloud Scheduler job
+# that runs:  python manage.py process_documents

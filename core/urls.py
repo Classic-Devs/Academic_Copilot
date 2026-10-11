@@ -1,9 +1,9 @@
 from django.urls import path
+
 from .views import (
-    LandingView, SignupView, LoginView, LogoutView, 
-    DashboardView, ProfileView, ReprocessView, DeleteDocumentView, UploadView, ChatView,
-    GlobalResourcesView, AcquireDocumentView, DeleteChatMessageView, ClearChatView,
-    ToggleVisibilityView
+    AcquireDocumentView, ChatView, ClearChatView, DashboardView, DeleteChatMessageView,
+    DeleteDocumentView, DocumentFileView, DocumentStatusView, GlobalResourcesView, LandingView,
+    LoginView, LogoutView, ProfileView, ReprocessView, SignupView, ToggleVisibilityView, UploadView,
 )
 
 urlpatterns = [
@@ -13,6 +13,8 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
     path('profile/', ProfileView.as_view(), name='user_profile'),
+    path('documents/status/', DocumentStatusView.as_view(), name='document_status'),
+    path('documents/<int:doc_id>/file/', DocumentFileView.as_view(), name='document_file'),
     path('reprocess/<int:doc_id>/', ReprocessView.as_view(), name='reprocess_document'),
     path('delete/<int:doc_id>/', DeleteDocumentView.as_view(), name='delete_document'),
     path('upload/', UploadView.as_view(), name='upload'),
@@ -23,4 +25,3 @@ urlpatterns = [
     path('acquire/<int:doc_id>/', AcquireDocumentView.as_view(), name='acquire_document'),
     path('toggle-visibility/<int:doc_id>/', ToggleVisibilityView.as_view(), name='toggle_visibility'),
 ]
-

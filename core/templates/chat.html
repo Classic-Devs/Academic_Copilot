@@ -54,7 +54,7 @@
     <div class="relative z-10 px-3 py-3 md:p-8 bg-theme-secondary border-t border-theme-subtle">
         <form id="chat-form" class="flex items-end gap-3 md:gap-6 bg-theme-input rounded-2xl px-4 md:px-6 py-2 border border-theme-subtle focus-within:border-indigo-500/40 transition-all shadow-sm">
             {% csrf_token %}
-            <textarea id="user-input"
+            <textarea id="user-input" maxlength="4000"
                    placeholder="Ask anything about your docs..."
                    autocomplete="off"
                    rows="1"
@@ -222,6 +222,7 @@
 {% endblock %}
 
 {% block extra_js %}
+{{ chat_history|json_script:"chat-history" }}
 <script>
     const chatForm = document.getElementById('chat-form');
     const chatMessages = document.getElementById('chat-messages');
@@ -279,54 +280,7 @@
         }
     }
 
-    chatForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const query = userInput.value.trim();
-        if (!query) return;
-
-        const queryId = addMessage(query, 'user', false, true);
-        userInput.value = '';
-        userInput.style.height = 'auto';
-        updateClearChatButton();
-
-        // Blur on mobile to dismiss keyboard
-        if (window.innerWidth < 768) userInput.blur();
-
-        const typingId = addMessage('Synthesizing response...', 'ai', true, true);
-
-        try {
-            const response = await fetch('{% url "chat" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({ query: query })
-            });
-
-            const data = await response.json();
-            // The outer .message-wrapper was already created by addMessage(); get it directly.
-            const outerWrapper = document.getElementById(typingId).closest('.message-wrapper');
-
-            if (!response.ok) {
-                outerWrapper.innerHTML = `<div class="p-4 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 text-sm border border-red-500/20">Analysis interrupted.</div>`;
-                return;
-            }
-
-            // Replace the entire content of the existing outer wrapper — no extra nesting.
-            outerWrapper.innerHTML = `
-                <div class="w-full flex flex-col gap-2">
-                    <div class="flex-1">
-                        <div class="ai-response-area">
-                            <div class="flex items-center gap-3 mb-4 md:mb-6 border-b border-theme-subtle pb-3 md:pb-4">
-                                <div class="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-indigo-500 shadow-glow-indigo"></div>
-                                <p class="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] text-indigo-500/80">AltaStudy</p>
-                            </div>
-                            <div class="message-content opacity-0 animate-fade-in-up" style="animation-delay: 50ms;">
-                                ${formatAIResponse(data.response, data.citations)}
-                            </div>
-                        </div>
-                    </div>
+    const AI_ACTIONS_HTML = `
                     <div class="message-actions flex justify-start gap-2">
                         <button type="button" class="message-action-btn" onclick="copyMessage(this)" title="Copy response">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
@@ -334,20 +288,106 @@
                         <button type="button" class="message-action-btn hover:text-red-500 hover:border-red-500/30" onclick="deleteConversation(this)" title="Delete this Q&amp;A">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
+                    </div>`;
+
+    function showError(wrapper, message) {
+        wrapper.innerHTML = '<div class="p-4 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 text-sm border border-red-500/20"></div>';
+        wrapper.firstElementChild.textContent = message;
+    }
+
+    function buildAIWrapper(outerWrapper) {
+        outerWrapper.innerHTML = `
+                <div class="w-full flex flex-col gap-2">
+                    <div class="flex-1">
+                        <div class="ai-response-area">
+                            <div class="flex items-center gap-3 mb-4 md:mb-6 border-b border-theme-subtle pb-3 md:pb-4">
+                                <div class="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-indigo-500 shadow-glow-indigo"></div>
+                                <p class="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] text-indigo-500/80">AltaStudy</p>
+                            </div>
+                            <div class="message-content text-theme-primary leading-[1.8] font-light text-sm md:text-base"></div>
+                        </div>
                     </div>
+                    ${AI_ACTIONS_HTML}
                 </div>`;
-            
-            // Stamp the shared db-id on both the AI wrapper and the user bubble wrapper
-            if (data.id) {
-                outerWrapper.setAttribute('data-db-id', data.id);
-                const userBubble = document.getElementById(queryId);
-                if (userBubble) {
-                    const userWrapper = userBubble.closest('.message-wrapper');
-                    if (userWrapper) userWrapper.setAttribute('data-db-id', data.id);
-                }
+        return outerWrapper.querySelector('.message-content');
+    }
+
+    // Reads the NDJSON event stream from the server and calls onEvent per line.
+    async function readEvents(response, onEvent) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            let newline;
+            while ((newline = buffer.indexOf('\n')) !== -1) {
+                const line = buffer.slice(0, newline).trim();
+                buffer = buffer.slice(newline + 1);
+                if (line) onEvent(JSON.parse(line));
+            }
+        }
+        if (buffer.trim()) onEvent(JSON.parse(buffer));
+    }
+
+    chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const query = userInput.value.trim();
+        if (!query || chatForm.querySelector('button[type="submit"]')?.disabled) return;
+
+        const queryId = addMessage(query, 'user', false, true);
+        userInput.value = '';
+        userInput.style.height = 'auto';
+        updateClearChatButton();
+        if (window.innerWidth < 768) userInput.blur();
+
+        const typingId = addMessage('Synthesizing response...', 'ai', true, true);
+        const outerWrapper = document.getElementById(typingId).closest('.message-wrapper');
+        const submitBtn = chatForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+
+        try {
+            const response = await fetch('{% url "chat" %}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ query: query })
+            });
+
+            if (!response.ok || !response.body) {
+                const data = await response.json().catch(() => ({}));
+                showError(outerWrapper, data.message || 'Analysis interrupted.');
+                return;
             }
 
-            // Scroll so the user question + start of AI answer are visible
+            let text = '', meta = {}, contentEl = null, renderPending = false, failed = false;
+            const render = () => {
+                renderPending = false;
+                if (contentEl) contentEl.innerHTML = renderMarkdown(text);
+            };
+
+            await readEvents(response, (evt) => {
+                if (evt.type === 'meta') {
+                    meta = evt;
+                } else if (evt.type === 'delta') {
+                    if (!contentEl) contentEl = buildAIWrapper(outerWrapper);
+                    text += evt.text;
+                    // Re-render at most once per animation frame while tokens stream in.
+                    if (!renderPending) { renderPending = true; requestAnimationFrame(render); }
+                } else if (evt.type === 'error') {
+                    failed = true;
+                    showError(outerWrapper, evt.message || 'Analysis interrupted.');
+                } else if (evt.type === 'done' && evt.id) {
+                    outerWrapper.setAttribute('data-db-id', evt.id);
+                    const userWrapper = document.getElementById(queryId)?.closest('.message-wrapper');
+                    if (userWrapper) userWrapper.setAttribute('data-db-id', evt.id);
+                }
+            });
+
+            if (failed) return;
+            if (!contentEl) { showError(outerWrapper, 'No response was received.'); return; }
+            renderAIResponse(contentEl, text, meta.citations, meta.confidence, meta.confidence_label);
+
             setTimeout(() => {
                 const allWrappers = [...chatMessages.querySelectorAll('.message-wrapper')];
                 const aiIndex = allWrappers.indexOf(outerWrapper);
@@ -356,45 +396,61 @@
             }, 80);
         } catch (error) {
             console.error('Error:', error);
-            const errWrapper = document.getElementById(typingId)?.closest('.message-wrapper');
-            if (errWrapper) errWrapper.innerHTML = `<div class="p-4 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 text-sm border border-red-500/20">Connectivity lost.</div>`;
+            showError(outerWrapper, 'Connectivity lost.');
+        } finally {
+            if (submitBtn) submitBtn.disabled = false;
         }
     });
 
-    const history = {{ chat_history|safe }};
+    const history = JSON.parse(document.getElementById('chat-history').textContent);
     if (history && history.length > 0) {
         chatMessages.innerHTML = '';
         history.forEach(item => {
             addMessage(item.query, 'user', false, false, item.id);
             const aiId = addMessage('', 'ai', false, false, item.id);
-            const aiMsg = document.getElementById(aiId);
-            aiMsg.innerHTML = formatAIResponse(item.response, item.citations);
+            renderAIResponse(document.getElementById(aiId), item.response, item.citations, item.confidence, item.confidence_label);
         });
-        
-        // Instant scroll on initial load (no smooth transition animation)
         chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'auto' });
-        // Run a delayed check to account for asynchronous DOM adjustments/font layout
         setTimeout(() => {
             chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'auto' });
         }, 100);
     }
 
-    function formatAIResponse(text, citations) {
-        let renderedText = "";
-        try { renderedText = marked.parse(text); } catch (e) { renderedText = text; }
+    const CONFIDENCE_STYLES = {
+        high:   ['High source match', 'text-emerald-600 dark:text-emerald-400 border-emerald-500/30'],
+        medium: ['Partial source match', 'text-amber-600 dark:text-amber-400 border-amber-500/30'],
+        low:    ['Weak source match: consider uploading more relevant material', 'text-red-600 dark:text-red-400 border-red-500/30'],
+    };
 
-        let response = `<div class="prose dark:prose-invert max-w-none text-theme-primary">${renderedText}</div>`;
+    // Renders sanitized markdown plus citation chips. All user/document-derived
+    // strings go through textContent or DOMPurify, never raw innerHTML.
+    function renderAIResponse(target, text, citations, confidence, label) {
+        target.innerHTML = '';
+        const prose = document.createElement('div');
+        prose.className = 'prose dark:prose-invert max-w-none text-theme-primary';
+        prose.innerHTML = renderMarkdown(text);
+        target.appendChild(prose);
 
         if (citations && citations.length > 0) {
-            response += '<div class="mt-6 pt-4 border-t border-theme-subtle flex flex-wrap gap-2">';
+            const bar = document.createElement('div');
+            bar.className = 'mt-6 pt-4 border-t border-theme-subtle flex flex-wrap items-center gap-2';
+            const style = CONFIDENCE_STYLES[label];
+            if (style && confidence != null) {
+                const badge = document.createElement('span');
+                badge.className = `text-[9px] uppercase font-black px-3 py-1.5 rounded border ${style[1]}`;
+                badge.textContent = `${style[0]} · ${Math.round(confidence * 100)}%`;
+                bar.appendChild(badge);
+            }
             citations.forEach((cite) => {
-                const label = `${cite.title}, P.${cite.page}`;
-                const escapedContent = encodeURIComponent(cite.content);
-                response += `<button onclick="showSource('${escapedContent}')" class="text-[9px] uppercase font-black px-3 py-1.5 bg-theme-input hover:bg-black/5 dark:hover:bg-white/5 text-indigo-600 dark:text-indigo-400 rounded border border-theme-subtle transition-all">Source: ${label}</button>`;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'text-[9px] uppercase font-black px-3 py-1.5 bg-theme-input hover:bg-black/5 dark:hover:bg-white/5 text-indigo-600 dark:text-indigo-400 rounded border border-theme-subtle transition-all';
+                btn.textContent = `Source: ${cite.title}, P.${cite.page}`;
+                btn.addEventListener('click', () => showSource(cite.content));
+                bar.appendChild(btn);
             });
-            response += '</div>';
+            target.appendChild(bar);
         }
-        return response;
     }
 
     function addMessage(text, sender, isTyping = false, shouldScroll = true, dbId = null) {
@@ -519,8 +575,7 @@
     // Legacy alias kept in case any old markup still references it
     window.deleteMessage = window.deleteConversation;
 
-    window.showSource = function(encodedContent) {
-        const content = decodeURIComponent(encodedContent);
+    window.showSource = function(content) {
         sourceContent.textContent = content;
         sourceViewer.classList.remove('hidden');
     };

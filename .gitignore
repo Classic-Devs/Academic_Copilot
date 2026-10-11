@@ -6,3 +6,6 @@ __pycache__/
 db.sqlite3
 media/
 staticfiles/
+chroma_db/
+doc_status.txt
+.coverage

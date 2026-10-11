@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}AltaStudy{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js" integrity="sha384-/TQbtLCAerC3jgaim+N78RZSDYV7ryeoBCVqTuzRrFec2akfBkHS7ACQ3PQhvMVi" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" integrity="sha384-+VfUPEb0PdtChMwmBcBmykRMDd+v6D/oFmB3rZM/puCMDYcIvF968OimRh4KQY9a" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -456,10 +457,13 @@
                     <span id="theme-icon" class="mr-3">🌙</span>
                     <span id="theme-text">Dark Mode</span>
                 </button>
-                <a href="{% url 'logout' %}" class="flex items-center p-3 w-full text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                    Logout
-                </a>
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="flex items-center p-3 w-full text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                        <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        Logout
+                    </button>
+                </form>
             </div>
         </aside>
 
@@ -578,7 +582,7 @@
         toast.innerHTML = `
             <div class="toast-icon">${icons[type] || icons.info}</div>
             <div class="flex-1 min-w-0">
-                <p class="text-white font-semibold text-sm leading-snug">${message}</p>
+                <p class="toast-message text-white font-semibold text-sm leading-snug"></p>
             </div>
             <button onclick="this.closest('.toast-item').classList.add('toast-out'); setTimeout(()=>this.closest('.toast-item')?.remove(),300)" class="flex-shrink-0 text-white/70 hover:text-white transition-colors mt-0.5">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -586,6 +590,8 @@
             <div class="toast-progress"></div>
         `;
 
+        // Messages can contain user-controlled text (file names, titles): never parse as HTML.
+        toast.querySelector('.toast-message').textContent = message;
         container.appendChild(toast);
         requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('toast-in')));
 
@@ -595,6 +601,22 @@
                 setTimeout(() => toast.remove(), 350);
             }
         }, 4800);
+    };
+
+    // ── Safe rendering helpers ─────────────────────────────
+    window.csrfToken = function() {
+        const m = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+        return m ? decodeURIComponent(m[1]) : '';
+    };
+    window.renderMarkdown = function(text) {
+        let html;
+        try { html = marked.parse(text || ''); } catch (e) { html = ''; }
+        if (window.DOMPurify) {
+            return DOMPurify.sanitize(html, { USE_PROFILES: { html: true }, FORBID_TAGS: ['style', 'form', 'input'] });
+        }
+        const div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
     };
 
     // ── Custom Confirm Modal ───────────────────────────────
