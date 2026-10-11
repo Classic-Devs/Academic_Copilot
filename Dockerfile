@@ -1,26 +1,27 @@
-# Use an official Python runtime as a parent image
 FROM python:3.12-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PORT=8080
 
-# Set work directory
 WORKDIR /app
 
-# Install dependencies
 COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
-# Copy project files into the container
 COPY . /app/
-
-# Copy the entrypoint script from your project root and make it executable
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
 
-# Set the entrypoint script to run on startup
+# Run as an unprivileged user; only media/ and chroma_db/ need to be writable.
+RUN chmod +x /entrypoint.sh \
+    && useradd --create-home --uid 1000 app \
+    && mkdir -p /app/media /app/chroma_db /app/staticfiles \
+    && chown -R app:app /app/media /app/chroma_db /app/staticfiles
+USER app
+
+EXPOSE 8080
 ENTRYPOINT ["/entrypoint.sh"]
 
-# Run the application (keeping your specific port binding)
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "academic_copilot.wsgi:application"]
+# gthread workers keep streaming chat responses from blocking other requests.
+CMD ["sh", "-c", "exec gunicorn academic_copilot.wsgi:application --bind 0.0.0.0:${PORT} --worker-class gthread --workers 2 --threads 8 --timeout 120"]

@@ -68,9 +68,9 @@
     <div id="drop-zone" class="p-6 md:p-10 border-2 border-dashed border-gray-300 rounded-xl bg-[var(--bg-secondary)] text-center hover:border-indigo-400 transition-all cursor-pointer active:border-indigo-500">
         <div class="flex flex-col items-center">
             <svg class="w-10 h-10 md:w-12 md:h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-            <p class="text-base md:text-lg font-medium text-gray-700">Tap or drop PDFs here</p>
-            <p class="text-sm text-gray-500 mt-1">Supports multiple files</p>
-            <input type="file" id="file-input" class="hidden" multiple accept=".pdf">
+            <p class="text-base md:text-lg font-medium text-gray-700">Tap or drop files here</p>
+            <p class="text-sm text-gray-500 mt-1">PDF, TXT or Markdown · up to {{ max_upload_mb }} MB each · multiple files supported</p>
+            <input type="file" id="file-input" class="hidden" multiple accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown">
         </div>
     </div>
 </div>
@@ -81,11 +81,11 @@
     <div class="card p-4 rounded-xl shadow-sm border-[var(--border-color)]">
         <div class="flex items-start justify-between gap-3 mb-3">
             <div class="flex-1 min-w-0">
-                <p class="font-bold text-sm text-[var(--text-primary)] truncate">{{ doc.title }}</p>
+                <a href="{% url 'document_file' doc.id %}" target="_blank" rel="noopener" class="block font-bold text-sm text-[var(--text-primary)] truncate hover:text-indigo-600">{{ doc.title }}</a>
                 <p class="text-xs text-secondary mt-0.5">{{ doc.uploaded_at|date:"M d, Y" }}</p>
             </div>
             <!-- Status badge -->
-            {% if doc.status == 'processing' %}
+            {% if doc.status == 'processing' or doc.status == 'pending' %}
             <span class="flex-shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 animate-pulse">Processing</span>
             {% elif doc.status == 'ready' %}
             <span class="flex-shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Ready</span>
@@ -163,7 +163,7 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-[var(--text-primary)] border-r border-[var(--border-color)] relative">
                     <div class="flex items-center">
                         <div class="w-2 h-2 rounded-full bg-[var(--accent-primary)] mr-3 opacity-0 group-hover/row:opacity-100 transition-opacity"></div>
-                        {{ doc.title }}
+                        <a href="{% url 'document_file' doc.id %}" target="_blank" rel="noopener" class="hover:text-indigo-600">{{ doc.title }}</a>
                     </div>
                     {% if doc.error_message %}
                     <div class="hidden group-hover:block absolute z-10 w-64 p-2 mt-1 -ml-2 text-xs text-white bg-gray-800 rounded-lg shadow-xl">
@@ -180,7 +180,7 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary">{{ doc.uploaded_at|date:"M d, Y" }}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                    {% if doc.status == 'processing' %}
+                    {% if doc.status == 'processing' or doc.status == 'pending' %}
                     <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 animate-pulse">Processing...</span>
                     {% elif doc.status == 'ready' %}
                     <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Ready</span>
@@ -224,7 +224,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" class="px-6 py-10 text-center text-gray-500 italic">No documents uploaded yet.</td>
+                <td colspan="6" class="px-6 py-10 text-center text-gray-500 italic">No documents uploaded yet.</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -259,42 +259,78 @@
         handleFiles(e.target.files);
     });
 
-    function handleFiles(files) {
+    const MAX_UPLOAD_BYTES = {{ max_upload_mb }} * 1024 * 1024;
+    const ALLOWED_EXTENSIONS = ['.pdf', '.txt', '.md'];
+
+    function fileExtension(name) {
+        const dot = name.lastIndexOf('.');
+        return dot === -1 ? '' : name.slice(dot).toLowerCase();
+    }
+
+    async function handleFiles(files) {
+        const valid = [];
         for (const file of files) {
-            if (file.type !== 'application/pdf') {
-                showToast('Please upload PDF files only.', 'error');
-                continue;
+            if (!ALLOWED_EXTENSIONS.includes(fileExtension(file.name))) {
+                showToast(`"${file.name}": only PDF, TXT and Markdown files are supported.`, 'error');
+            } else if (file.size > MAX_UPLOAD_BYTES) {
+                showToast(`"${file.name}" is larger than {{ max_upload_mb }} MB.`, 'error');
+            } else {
+                valid.push(file);
             }
-            uploadFile(file);
+        }
+        if (!valid.length) return;
+
+        showToast(`Uploading ${valid.length} file${valid.length > 1 ? 's' : ''}...`, 'info');
+        // Upload sequentially and reload once at the end, so no upload is cut off.
+        let succeeded = 0;
+        for (const file of valid) {
+            if (await uploadFile(file)) succeeded++;
+        }
+        if (succeeded) {
+            showToast(`${succeeded} document${succeeded > 1 ? 's' : ''} uploaded. Processing started.`, 'success');
+            setTimeout(() => window.location.reload(), 1200);
         }
     }
 
-    function uploadFile(file) {
+    async function uploadFile(file) {
         const formData = new FormData();
-        const fieldOfStudy = document.getElementById('field-of-study').value;
         formData.append('file', file);
-        formData.append('field_of_study', fieldOfStudy);
+        formData.append('field_of_study', document.getElementById('field-of-study').value);
         const isPublic = document.getElementById('is-public-toggle')?.checked ?? true;
         formData.append('is_public', isPublic ? 'true' : 'false');
-        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-        showToast(`Uploading "${file.name}"...`, 'info');
-
-        fetch('{% url "upload" %}', {
-            method: 'POST',
-            body: formData,
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                showToast('Document uploaded successfully!', 'success');
-                setTimeout(() => window.location.reload(), 1200);
-            } else {
-                showToast(data.message, 'error');
-            }
-        })
-        .catch(error => console.error('Error:', error));
+        try {
+            const response = await fetch('{% url "upload" %}', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                body: formData,
+            });
+            const data = await response.json().catch(() => ({}));
+            if (response.ok && data.status === 'success') return true;
+            showToast(data.message || `Upload of "${file.name}" failed.`, 'error');
+        } catch (error) {
+            showToast(`Network error while uploading "${file.name}".`, 'error');
+        }
+        return false;
     }
+
+    // Poll processing status instead of asking the user to refresh.
+    (function pollStatus() {
+        const pending = new Set({{ processing_ids|safe }});
+        if (!pending.size) return;
+        const timer = setInterval(async () => {
+            try {
+                const response = await fetch('{% url "document_status" %}', { headers: { 'Accept': 'application/json' } });
+                if (!response.ok) return;
+                const data = await response.json();
+                const finished = data.documents.some(d => pending.has(d.id) && d.status !== 'processing' && d.status !== 'pending');
+                if (finished) {
+                    clearInterval(timer);
+                    window.location.reload();
+                }
+            } catch (e) { /* transient network error: try again next tick */ }
+        }, 4000);
+    })();
 
     function reprocessDocument(docId) {
         fetch(`/reprocess/${docId}/`, {
@@ -307,7 +343,7 @@
                 showToast('Processing restarted...', 'success');
                 setTimeout(() => window.location.reload(), 1200);
             } else {
-                showToast('Reprocess failed', 'error');
+                showToast(data.message || 'Reprocess failed', 'error');
             }
         })
         .catch(error => console.error('Error:', error));
@@ -364,7 +400,7 @@
                     btn.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg> Private`;
                 }
             } else {
-                showToast('Could not update visibility. Please try again.', 'error');
+                showToast(data.message || 'Could not update visibility. Please try again.', 'error');
             }
         })
         .catch(() => showToast('Network error. Please try again.', 'error'));

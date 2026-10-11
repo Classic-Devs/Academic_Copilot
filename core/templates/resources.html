@@ -78,11 +78,17 @@
                 <div class="mt-auto pt-3 md:pt-4 border-t border-[var(--border-color)] flex items-center justify-between gap-2">
                     <span class="text-xs text-[var(--text-secondary)] flex-shrink-0">{{ doc.uploaded_at|date:"M d, Y" }}</span>
                     <div class="flex items-center gap-2">
-                        <a href="{{ doc.file.url }}" target="_blank"
+                        <a href="{% url 'document_file' doc.id %}" target="_blank" rel="noopener"
                            class="p-2 bg-[var(--bg-primary)] text-[var(--text-secondary)] rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all border border-[var(--border-color)]"
                            title="Preview Document">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                         </a>
+                        {% if doc.file_hash and doc.file_hash in owned_hashes %}
+                        <span class="px-3 md:px-4 py-2 text-xs md:text-sm font-bold rounded-lg flex items-center gap-1.5 bg-green-50 text-green-700 border border-green-100">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                            In library
+                        </span>
+                        {% else %}
                         <button
                             id="acquire-btn-{{ doc.id }}"
                             onclick="acquireDocument('{{ doc.id }}', '{{ doc.title|escapejs }}')"
@@ -90,6 +96,7 @@
                             <svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             Add
                         </button>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -105,6 +112,20 @@
         </div>
         {% endfor %}
     </div>
+
+    {% if page_obj.has_other_pages %}
+    <nav class="flex items-center justify-center gap-3 mt-8" aria-label="Pagination">
+        {% if page_obj.has_previous %}
+        <a href="?{% if search_query %}q={{ search_query|urlencode }}&{% endif %}{% if current_field %}field={{ current_field|urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}"
+           class="px-4 py-2 rounded-lg border border-[var(--border-color)] text-sm font-semibold text-[var(--text-secondary)] hover:text-indigo-600">← Previous</a>
+        {% endif %}
+        <span class="text-sm text-[var(--text-secondary)]">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+        <a href="?{% if search_query %}q={{ search_query|urlencode }}&{% endif %}{% if current_field %}field={{ current_field|urlencode }}&{% endif %}page={{ page_obj.next_page_number }}"
+           class="px-4 py-2 rounded-lg border border-[var(--border-color)] text-sm font-semibold text-[var(--text-secondary)] hover:text-indigo-600">Next →</a>
+        {% endif %}
+    </nav>
+    {% endif %}
 </div>
 {% endblock %}
 
